@@ -6,6 +6,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
+  // Agregamos esta línea para corregir las rutas en GitHub Pages:
+  base: '/SYSTEM-BILLAR/',
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
