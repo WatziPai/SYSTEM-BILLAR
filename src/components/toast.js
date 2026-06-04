@@ -46,9 +46,9 @@ class ToastSystem {
     
     const dismiss = () => {
       toast.classList.remove("toast-show");
-      toast.classList.add("toast-hide");
+      toast.classList.add("out");
       
-      toast.addEventListener("transitionend", () => {
+      toast.addEventListener("animationend", () => {
         toast.remove();
       });
     };

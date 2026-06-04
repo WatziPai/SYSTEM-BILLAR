@@ -100,8 +100,8 @@ function renderHistorialCierres() {
         <small style="display:block;color:#666;">${c.usuario} • ${c.cantidadVentas} transacciones</small>
       </div>
       <div style="text-align:center;">
-        <div style="font-size:22px;font-weight:800;color:#2d7a4d;">S/ ${c.total.toFixed(2)}</div>
-        <small style="color:#666;">Ef: S/${c.totalEfectivo.toFixed(2)} | Yp: S/${c.totalYape.toFixed(2)}</small>
+        <div style="font-size:22px;font-weight:800;color:#2d7a4d;">S/ ${(c.total || 0).toFixed(2)}</div>
+        <small style="color:#666;">Ef: S/${(c.totalEfectivo || 0).toFixed(2)} | Yp: S/${(c.totalYape || 0).toFixed(2)}</small>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-small btn-blue" data-action="descargar-cierre" data-id="${c.id}">📥 PDF</button>
