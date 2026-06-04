@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎱 Sistema de Gestión de Billar - Premium</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Clean import of main CSS compiled by Vite -->
+  <script type="module" crossorigin src="/assets/index-CGFFR3pD.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Mq8tkBzm.css">
+</head>
+
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <div class="login-icon">🎱</div>
+            <h1>Sistema de Billar</h1>
+            <p style="text-align: center; color: var(--text-muted, #94a3b8); margin-bottom: 30px;">Inicia sesión para continuar</p>
+
+            <div id="loginError" class="error-msg hidden"></div>
+
+            <div class="input-group">
+                <label for="loginUsername">Usuario</label>
+                <input type="text" id="loginUsername" placeholder="Ingresa tu usuario" autocomplete="username">
+            </div>
+
+            <div class="input-group">
+                <label for="loginPassword">Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" autocomplete="current-password">
+            </div>
+
+            <button class="btn btn-primary btn-full" id="btnLogin">
+                Iniciar Sesión
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCREEN -->
+    <div id="mainScreen" class="container hidden">
+        <div class="header">
+            <div class="header-top">
+                <div>
+                    <h1>🎱 Sistema de Gestión de Billar</h1>
+                    <div class="user-info">
+                        Bienvenido, <strong id="userName"></strong>
+                        <span class="user-badge" id="userRole"></span>
+                        <span class="status-indicator">● Conectado</span>
+                    </div>
+                </div>
+                <div class="header-buttons">
+                    <button id="btnUsuarios" class="btn-small btn-blue hidden" data-action="toggle-usuarios">
+                        👥 Usuarios
+                    </button>
+                    <button id="btnLogout" class="btn-small btn-red" data-action="logout">
+                        🚪 Salir
+                    </button>
+                </div>
+            </div>
+
+            <!-- USUARIOS MANAGEMENT PANEL -->
+            <div id="usuariosPanel" class="usuarios-panel hidden">
+                <div class="section-header">
+                    <h3>Gestión de Usuarios</h3>
+                    <button id="btnCrearUsuario" class="btn-small btn-green" data-action="show-modal-usuario">
+                        ➕ Crear Usuario
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Nombre</th>
+                                <th>Rol</th>
+                                <th style="text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuariosTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TARIFFS AND CONFIGURATION -->
+            <div class="config-grid">
+                <div class="config-box config-blue">
+                    <label for="tarifaHora">Tarifa por Hora Completa (S/)</label>
+                    <input type="number" id="tarifaHora" value="5.00" step="0.50" min="0">
+                </div>
+                <div class="config-box config-yellow">
+                    <label for="tarifaExtra5Min">Tarifa cada 10 min extra después de los primeros 5 min (S/)</label>
+                    <input type="number" id="tarifaExtra5Min" step="0.01" min="0" value="1.00">
+                </div>
+                <div class="config-box btn-box">
+                    <button id="btnGuardarConfig" class="btn btn-blue btn-full" data-action="guardar-configuracion">
+                        💾 Guardar Configuración
+                    </button>
+                </div>
+                <div class="config-box total-box">
+                    <label>Total del Día</label>
+                    <div class="total-amount" id="totalDia">S/ 0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP NAVIGATION TABS -->
+        <div class="tabs">
+            <button class="tab active" data-tab="mesas">
+                🎱 Mesas
+            </button>
+            <button class="tab" data-tab="ventas">
+                💰 Ventas
+            </button>
+            <button class="tab" data-tab="inventario">
+                📦 Inventario
+            </button>
+            <button class="tab" data-tab="reportes">
+                📊 Reportes
+            </button>
+            <button id="btnTabErrores" class="tab hidden" data-tab="errores">
+                ⚠️ Errores
+            </button>
+            <button id="btnTabDashboard" class="tab hidden" data-tab="dashboard">
+                📈 Dashboard
+            </button>
+            <button id="btnTabCaja" class="tab hidden" data-tab="caja">
+                💸 Caja/Gastos
+            </button>
+            <button id="btnTabMensual" class="tab hidden" data-tab="mensual">
+                📅 Mensual
+            </button>
+            <button id="btnTabConsumoDueno" class="tab hidden" data-tab="consumoDueno">
+                🍽️ Consumo Dueño
+            </button>
+        </div>
+
+        <!-- TAB CONTENT: MESAS -->
+        <div id="tabMesas" class="tab-content active">
+            <div class="section-box" style="margin-bottom: 30px;">
+                <div class="section-header">
+                    <h2>🎱 Mesas de Billar</h2>
+                    <button id="btnAgregarMesa" class="btn-small btn-green hidden" data-action="agregar-mesa">
+                        ➕ Agregar Mesa
+                    </button>
+                </div>
+                <div id="mesasContainer" class="mesas-grid"></div>
+            </div>
+
+            <div class="section-divider">
+                <span>🍺 ZONA DE CONSUMO</span>
+            </div>
+
+            <div class="section-box">
+                <div class="section-header">
+                    <h2>🍺 Mesas de Consumo (Tomar/Fumar)</h2>
+                    <button id="btnAgregarMesaConsumo" class="btn-small btn-green hidden" data-action="agregar-mesa-consumo">
+                        ➕ Agregar Mesa
+                    </button>
+                </div>
+                <div id="mesasConsumoContainer" class="mesas-grid"></div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: VENTAS -->
+        <div id="tabVentas" class="tab-content">
+            <div class="ventas-section">
+                <div class="section-header">
+                    <h2>Registro de Ventas</h2>
+                    <div class="flex-gap-10">
+                        <button id="btnVentaManual" class="btn-small btn-blue" data-action="show-venta-manual">
+                            ➕ Venta Manual
+                        </button>
+                        <button id="btnVentaProductos" class="btn-small btn-green" data-action="show-venta-productos">
+                            🛒 Vender Productos
+                        </button>
+                        <button id="btnEliminarVentas" class="btn-small btn-red hidden" data-action="show-eliminar-ventas">
+                            🗑️ Eliminar Ventas
+                        </button>
+                        <button id="btnReportarError" class="btn-small btn-orange hidden" data-action="show-modal-error">
+                            ⚠️ Reportar Error
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Usuario</th>
+                                <th style="text-align: right;">Monto</th>
+                                <th style="text-align: center;">Pago</th>
+                                <th style="text-align: center;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ventasTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: INVENTARIO -->
+        <div id="tabInventario" class="tab-content">
+            <div class="section-box">
+                <div class="section-header">
+                    <h2>Inventario de Productos</h2>
+                    <div class="flex-gap-10-center">
+                        <select id="filtroOrdenInventario" class="select-clean">
+                            <option value="default">Orden por Defecto</option>
+                            <option value="masVendidos">🔥 Más Vendidos</option>
+                            <option value="menosStock">📉 Menos Stock</option>
+                            <option value="categoria">📂 Por Categoría</option>
+                        </select>
+                        <button id="btnAgregarProducto" class="btn-small btn-green hidden" data-action="show-modal-producto">
+                            ➕ Agregar Producto
+                        </button>
+                    </div>
+                </div>
+                <div id="inventarioGrid" class="inventario-grid"></div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: REPORTES -->
+        <div id="tabReportes" class="tab-content">
+            <div class="section-box">
+                <h2 style="margin-bottom: 20px;">Reportes y Estadísticas</h2>
+
+                <div class="reporte-grid">
+                    <div class="reporte-card card-gradient-purple">
+                        <h3>Total Ventas</h3>
+                        <div class="valor" id="reporteTotalVentas">S/ 0.00</div>
+                    </div>
+                    <div class="reporte-card card-gradient-pink">
+                        <h3>Ventas Mesas</h3>
+                        <div class="valor" id="reporteVentasMesas">S/ 0.00</div>
+                    </div>
+                    <div class="reporte-card card-gradient-blue">
+                        <h3>Ventas Productos</h3>
+                        <div class="valor" id="reporteVentasProductos">S/ 0.00</div>
+                    </div>
+                    <div class="reporte-card card-gradient-cyan">
+                        <h3>Transacciones</h3>
+                        <div class="valor" id="reporteTransacciones">0</div>
+                    </div>
+                    <div class="reporte-card card-gradient-orange">
+                        <h3>Consumo Dueño</h3>
+                        <div class="valor" id="reporteConsumoDueno" style="font-size: 14px;">S/ 0.00</div>
+                    </div>
+                    <div class="reporte-card card-gradient-green">
+                        <h3>💵 Total Efectivo</h3>
+                        <div class="valor" id="reporteTotalEfectivo">S/ 0.00</div>
+                        <span class="sub-legend">Ventas pagadas en efectivo</span>
+                    </div>
+                    <div class="reporte-card card-gradient-violet">
+                        <h3>📱 Total Yape</h3>
+                        <div class="valor" id="reporteTotalYape">S/ 0.00</div>
+                        <span class="sub-legend">Ventas pagadas por Yape/Plin</span>
+                    </div>
+                </div>
+
+                <div class="cierre-action-box">
+                    <button id="btnCerrarDia" class="btn btn-primary btn-large" data-action="cerrar-dia">
+                        🔒 Cerrar Turno/Día
+                    </button>
+                    <p>Genera un reporte del período actual y archiva las ventas</p>
+                </div>
+
+                <h3 style="margin: 30px 0 15px 0;">Detalle de Ventas</h3>
+
+                <div class="table-responsive">
+                    <div id="reporteDetalleContainer">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Descripción</th>
+                                    <th>Usuario</th>
+                                    <th style="text-align: right;">Monto</th>
+                                    <th style="text-align: center;">Pago</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reporteDetalleTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h3 style="color: var(--accent-emerald, #10b981); margin-bottom: 15px;">📁 Historial de Cierres</h3>
+                    <div id="historialCierresContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: DASHBOARD -->
+        <div id="tabDashboard" class="tab-content">
+            <div class="section-box">
+                <div class="section-header">
+                    <h2>📈 Análisis Financiero Real (Admin)</h2>
+                    <small style="color: var(--text-muted, #94a3b8);">Cifras acumuladas históricas basadas en stock y ventas</small>
+                </div>
+
+                <div class="financial-summary-grid">
+                    <div class="financial-card card-blue-top">
+                        <small>💰 Dinero Total en Caja</small>
+                        <div class="valor" id="dashDineroCaja">S/ 0.00</div>
+                        <span class="detalle">Saldo Local + Chica Actual</span>
+                    </div>
+                    <div class="financial-card card-emerald-top">
+                        <small>Ganancia Cobrada (Ventas)</small>
+                        <div class="valor" id="dashGananciaBruta">S/ 0.00</div>
+                        <span class="detalle">Utilidad real ya percibida</span>
+                    </div>
+                    <div class="financial-card card-green-top">
+                        <small>Ganancia por Cobrar (Stock)</small>
+                        <div class="valor" id="dashGananciaPotencial">S/ 0.00</div>
+                        <span class="detalle">Margen total en estante</span>
+                    </div>
+                    <div class="financial-card card-blue-bright-top">
+                        <small>Utilidad Neta Estimada</small>
+                        <div class="valor" id="dashUtilidadNeta">S/ 0.00</div>
+                        <span class="detalle">Cobrada + Extras - Gastos</span>
+                    </div>
+                    <div class="financial-card card-amber-top">
+                        <small>Inversión en Stock</small>
+                        <div class="valor" id="dashInversionStock">S/ 0.00</div>
+                        <span class="detalle">Valor costo del inventario</span>
+                    </div>
+                    <div class="financial-card card-purple-top">
+                        <small>Margen Promedio</small>
+                        <div class="valor" id="dashMargenPromedio">0%</div>
+                        <span class="detalle">Rendimiento por venta</span>
+                    </div>
+                </div>
+
+                <div id="dashAlertasContainer" style="margin-top: 20px;"></div>
+
+                <div class="dashboard-charts-row">
+                    <div class="section-box chart-box">
+                        <h3>📊 Rentabilidad por Categoría</h3>
+                        <div id="dashCategoriasContainer"></div>
+                    </div>
+                    <div class="section-box chart-box">
+                        <h3>🏆 Top Productos Rentables</h3>
+                        <div id="dashTopProductos"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: CAJA -->
+        <div id="tabCaja" class="tab-content">
+            <div class="section-box">
+                <div class="section-header wrap-btns">
+                    <h2>💸 Movimientos de Caja y Gastos</h2>
+                    <button id="btnRegistrarGasto" class="btn-small btn-red" data-action="show-modal-movimiento" data-tipo="egreso">
+                        ➖ Registrar Gasto
+                    </button>
+                    <button id="btnRetiroCaja" class="btn-small btn-orange" data-action="show-modal-movimiento" data-tipo="retiro">
+                        💸 Retiro de Caja
+                    </button>
+                    <button id="btnReposicionStock" class="btn-small btn-purple" data-action="show-modal-movimiento" data-tipo="reposicion">
+                        📦 Reposición Stock
+                    </button>
+                    <button id="btnIngresoExtra" class="btn-small btn-green" data-action="show-modal-movimiento" data-tipo="ingreso">
+                        ➕ Ingreso Extra
+                    </button>
+                    <button id="btnTransferencia" class="btn-small btn-blue" data-action="show-modal-transferencia">
+                        🔄 Transferencia
+                    </button>
+                    <button id="btnTransferenciaYape" class="btn-small btn-purple-yape" data-action="show-modal-transferencia-yape">
+                        📱 Transferencia Yape
+                    </button>
+                    <button id="btnAjusteChica" class="btn-small btn-gray hidden" title="Ajustar Saldo Caja Chica" data-action="show-modal-ajuste-caja" data-caja="chica">
+                        ⚙️ Ajuste Chica
+                    </button>
+                    <button id="btnAjusteLocal" class="btn-small btn-gray hidden" title="Ajustar Saldo Caja Local" data-action="show-modal-ajuste-caja" data-caja="local">
+                        ⚙️ Ajuste Local
+                    </button>
+                    <button id="btnAjusteYape" class="btn-small btn-gray hidden" title="Ajustar Saldo Yape" data-action="show-modal-ajuste-caja" data-caja="yape">
+                        📱 Ajuste Yape
+                    </button>
+                    <button id="btnLimpiarMovimientos" class="btn-small btn-dark hidden" title="Borra todos los movimientos de caja sin afectar las ventas" data-action="limpiar-movimientos">
+                        🧹 Limpiar Historial
+                    </button>
+                </div>
+
+                <div class="caja-balance-strip">
+                    <div class="balance-item">
+                        <span>🏠 Caja Local:</span>
+                        <strong id="saldoCajaLocal">S/ 0.00</strong>
+                    </div>
+                    <div class="balance-item">
+                        <span>👛 Caja Chica:</span>
+                        <strong id="saldoCajaChica">S/ 0.00</strong>
+                    </div>
+                    <div class="balance-item">
+                        <span>📱 Total Yape:</span>
+                        <strong id="saldoYape">S/ 0.00</strong>
+                    </div>
+                    <div class="balance-item">
+                        <span>📉 Gastos del Mes:</span>
+                        <strong id="totalEgresos">S/ 0.00</strong>
+                    </div>
+                    <div class="balance-item">
+                        <span>💰 Total Gral:</span>
+                        <strong id="cajaBalance">S/ 0.00</strong>
+                    </div>
+                </div>
+
+                <div class="filters-row">
+                    <label for="filtroMovimientos">Filtrar por Tipo:</label>
+                    <select id="filtroMovimientos" class="select-clean">
+                        <option value="todos">Todos los movimientos</option>
+                        <option value="egreso">Gastos Operativos</option>
+                        <option value="retiro">Retiros de Caja</option>
+                        <option value="reposicion">Reposición Stock</option>
+                        <option value="ingreso">Ingresos Extra</option>
+                    </select>
+
+                    <label for="filtroFecha" style="margin-left: 20px;">Periodo:</label>
+                    <select id="filtroFecha" class="select-clean">
+                        <option value="todo">Todo el historial</option>
+                        <option value="hoy">Hoy</option>
+                        <option value="semana">Última Semana</option>
+                    </select>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Caja</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movimientosTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: REPORTE MENSUAL -->
+        <div id="tabMensual" class="tab-content">
+            <div class="section-box">
+                <div class="section-header">
+                    <h2>📅 Reporte Mensual</h2>
+                    <div class="flex-gap-10-center">
+                        <select id="filtroAnioMensual" class="select-clean"></select>
+                        <button id="btnActualizarMensual" class="btn-small btn-green">🔄 Actualizar</button>
+                    </div>
+                </div>
+
+                <div id="resumenAnualContainer" class="kpi-mensual-grid"></div>
+
+                <h3 style="color: var(--accent-emerald, #10b981); margin-bottom: 15px; font-size: 16px;">📊 Comparativo por Mes</h3>
+                <div class="table-responsive">
+                    <table id="tablaMensual">
+                        <thead>
+                            <tr>
+                                <th>Mes</th>
+                                <th style="text-align: right;">Ventas Totales</th>
+                                <th style="text-align: right;">💵 Efectivo</th>
+                                <th style="text-align: right;">📱 Yape</th>
+                                <th style="text-align: right;">Gastos</th>
+                                <th style="text-align: right;">Margen</th>
+                                <th style="text-align: right;">Utilidad Neta</th>
+                                <th style="text-align: center;">Transacc.</th>
+                                <th style="text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMensualBody">
+                            <tr>
+                                <td colspan="9" style="text-align:center; padding: 30px; color: #999;">Cargando datos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="color: var(--accent-emerald, #10b981); margin: 25px 0 15px 0; font-size: 16px;">📈 Evolución de Ventas</h3>
+                <div id="graficaMensualContainer" class="chart-container-mensual"></div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: ERRORES -->
+        <div id="tabErrores" class="tab-content">
+            <div class="section-box">
+                <div class="section-header">
+                    <h2>Errores Reportados</h2>
+                </div>
+                <div id="erroresContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: CONSUMO DUEÑO -->
+        <div id="tabConsumoDueno" class="tab-content">
+            <div class="section-box">
+                <div class="section-header">
+                    <h2>🍽️ Consumo del Dueño</h2>
+                    <button id="btnRegistrarConsumoDueno" class="btn-small btn-primary" data-action="show-modal-consumo-dueno">
+                        ➕ Registrar Consumo
+                    </button>
+                </div>
+                <p style="color: var(--text-muted, #94a3b8); margin-bottom: 20px;">
+                    ℹ️ Aquí se registran los consumos personales que NO se cobran, pero se descuentan del stock
+                </p>
+                <div id="consumoDuenoContainer" style="display: block !important;"></div>
+            </div>
+        </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 20px; color: white;">Cargando...</p>
+        </div>
+
+        <!-- MODAL: USUARIO -->
+        <div id="modalUsuario" class="modal">
+            <div class="modal-content">
+                <div class="modal-header" id="usuarioModalTitle">Crear Usuario</div>
+                <div id="usuarioError" class="error-msg hidden"></div>
+                <div class="input-group">
+                    <label for="nuevoNombre">Nombre Completo</label>
+                    <input type="text" id="nuevoNombre" autocomplete="name">
+                </div>
+                <div class="input-group">
+                    <label for="nuevoUsername">Usuario</label>
+                    <input type="text" id="nuevoUsername" autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="nuevoPassword">Contraseña</label>
+                    <input type="password" id="nuevoPassword" autocomplete="new-password" placeholder="Dejar en blanco para mantener la actual (al editar)">
+                </div>
+                <div class="input-group">
+                    <label for="nuevoRol">Rol</label>
+                    <select id="nuevoRol" class="select-clean">
+                        <option value="empleado">Empleado</option>
+                        <option value="encargado">Encargado de Caja</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button id="btnGuardarUsuario" class="btn btn-green btn-full">Guardar</button>
+                    <button id="btnCancelarUsuario" class="btn btn-gray btn-full">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: CONSUMO DE MESA (TIEMPO + PRODUCTOS) -->
+        <div id="modalConsumo" class="modal">
+            <div class="modal-content modal-large">
+                <div class="modal-large-header">
+                    <h2 id="modalConsumoTitulo">Consumo - Mesa XX</h2>
+                    <button class="close-btn" data-action="close-modal-consumo">×</button>
+                </div>
+
+                <div class="modal-large-body">
+                    <!-- Products available grid -->
+                    <div>
+                        <h3>Productos Disponibles</h3>
+                        <div style="margin-bottom: 15px;">
+                            <input type="text" id="buscarConsumoProducto" placeholder="🔍 Buscar producto...">
+                        </div>
+                        <div id="productosConsumoContainer" class="scroll-grid-products"></div>
+                    </div>
+
+                    <!-- Cart and table billing -->
+                    <div class="billing-panel">
+                        <h3>🍺 Consumos de la Mesa</h3>
+                        <div id="listaConsumosMesa" class="scroll-list-consumos"></div>
+                        <div class="billing-footer">
+                            <div class="billing-summary">
+                                <span>Total Consumo:</span>
+                                <strong id="totalConsumo">S/ 0.00</strong>
+                            </div>
+                            <button id="btnCobroParcial" class="btn btn-green btn-full" style="margin-bottom: 10px; padding: 12px;">
+                                💵 Cobrar Parcial
+                            </button>
+                            <button id="btnCerrarMesa" class="btn btn-blue btn-full" style="padding: 12px;">
+                                💰 Cerrar Mesa y Cobrar Todo (Total: S/ 0.00)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: VENTA MANUAL -->
+        <div id="modalVentaManual" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">Venta Manual</div>
+                <div class="input-group">
+                    <label for="ventaDescripcionManual">Descripción</label>
+                    <input type="text" id="ventaDescripcionManual" placeholder="Ej: Alquiler mesa pool">
+                </div>
+                <div class="input-group">
+                    <label for="ventaMontoManual">Monto (S/)</label>
+                    <input type="number" id="ventaMontoManual" step="0.01" min="0" placeholder="0.00">
+                </div>
+                <div class="input-group">
+                    <label for="metodoPagoManual">Método de Pago</label>
+                    <select id="metodoPagoManual" class="select-clean">
+                        <option value="Efectivo">💵 Efectivo</option>
+                        <option value="Yape">📱 Yape/Plin</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button id="btnGuardarVentaManual" class="btn btn-green btn-full" data-action="guardar-venta-manual">
+                        Guardar
+                    </button>
+                    <button id="btnCancelarVentaManual" class="btn btn-gray btn-full" data-action="close-venta-manual">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: VENTA RÁPIDA PRODUCTOS -->
+        <div id="modalVentaProductos" class="modal">
+            <div class="modal-content modal-large">
+                <div class="modal-large-header">
+                    <h2>Vender Productos</h2>
+                    <button id="btnCerrarVentaProductos" class="close-btn">×</button>
+                </div>
+                <div style="margin-bottom: 15px; width: 100%;">
+                    <input type="text" id="buscarVentaProducto" placeholder="🔍 Buscar producto..." style="width: 100%;">
+                </div>
+                <div id="productosVentaContainer" class="productos-venta-grid"></div>
+
+                <div class="quick-pay-bar">
+                    <span>Método de Pago (Venta Rápida):</span>
+                    <select id="metodoPagoDirecto" class="select-clean">
+                        <option value="Efectivo">💵 Efectivo</option>
+                        <option value="Yape">📱 Yape/Plin</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: REGISTRAR GASTO/EGRESO/MOVIMIENTO -->
+        <div id="modalMovimiento" class="modal">
+            <div class="modal-content">
+                <div class="modal-header" id="movimientoModalTitle">Registrar Gasto</div>
+                <div id="movimientoError" class="error-msg hidden"></div>
+
+                <div class="input-group">
+                    <label for="movTipo">Tipo de Movimiento</label>
+                    <select id="movTipo" class="select-clean">
+                        <option value="egreso">Gasto Operativo (Egreso)</option>
+                        <option value="retiro">Retiro de Efectivo</option>
+                        <option value="reposicion">Reposición de Stock</option>
+                        <option value="ingreso">Ingreso Extra</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="movDesc">Descripción / Concepto</label>
+                    <input type="text" id="movDesc" placeholder="Ej: Pago de luz / Compra snacks">
+                </div>
+
+                <div class="input-group">
+                    <label for="movMonto">Monto (S/)</label>
+                    <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00">
+                </div>
+
+                <div class="input-group">
+                    <label for="movCaja">¿En qué caja impacta?</label>
+                    <select id="movCaja" class="select-clean">
+                        <option value="local">🏠 Caja Local</option>
+                        <option value="chica">👛 Caja Chica</option>
+                        <option value="yape">📱 Yape</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="btnGuardarMovimiento" class="btn btn-red btn-full" data-action="guardar-movimiento">
+                        Confirmar
+                    </button>
+                    <button id="btnCancelarMovimiento" class="btn btn-gray btn-full" data-action="close-modal-movimiento">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: TRANSFERENCIA DE FONDOS -->
+        <div id="modalTransferencia" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">🔄 Transferir Fondos (Caja -> Caja Chica)</div>
+                <p style="font-size: 14px; color: var(--text-muted, #94a3b8); margin-bottom: 20px;">Mueve dinero de la Caja Local a la Caja Chica.</p>
+
+                <div id="transferenciaError" class="error-msg hidden"></div>
+
+                <div class="input-group">
+                    <label for="montoTransferencia">Monto a transferir (S/)</label>
+                    <input type="number" id="montoTransferencia" step="0.01" min="0" placeholder="0.00">
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="btnConfirmarTransferencia" class="btn btn-blue btn-full" data-action="guardar-transferencia">
+                        Confirmar Transferencia
+                    </button>
+                    <button id="btnCancelarTransferencia" class="btn btn-gray btn-full" data-action="close-modal-transferencia">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: TRANSFERENCIA YAPE A FISICO -->
+        <div id="modalTransferenciaYape" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header" style="color: var(--accent-purple, #9333ea);">📱 Transferir Yape a Caja</div>
+                <p style="font-size: 14px; color: var(--text-muted, #94a3b8); margin-bottom: 20px;">
+                    Registra el ingreso de dinero desde Yape hacia una de las cajas físicas.
+                </p>
+
+                <div id="transferenciaYapeError" class="error-msg hidden"></div>
+
+                <div class="input-group">
+                    <label for="montoTransYape">Monto a transferir (S/)</label>
+                    <input type="number" id="montoTransYape" step="0.01" min="0" placeholder="0.00">
+                </div>
+
+                <div class="input-group">
+                    <label for="destinoTransYape">Destino</label>
+                    <select id="destinoTransYape" class="select-clean">
+                        <option value="local">🏠 Caja Local</option>
+                        <option value="chica">👛 Caja Chica</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="btnConfirmarTransferenciaYape" class="btn btn-purple btn-full" data-action="guardar-transferencia-yape" style="background: var(--accent-purple, #9333ea); color: white;">
+                        Confirmar Transferencia
+                    </button>
+                    <button id="btnCancelarTransferenciaYape" class="btn btn-gray btn-full" data-action="close-modal-transferencia-yape">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: ELIMINAR VENTAS POR RANGO -->
+        <div id="modalEliminarVentas" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header" style="color: var(--accent-red, #ef4444);">🗑️ Eliminar Ventas</div>
+                <p style="font-size: 14px; color: var(--text-muted, #94a3b8); margin-bottom: 20px;">
+                    Selecciona el rango de fechas para eliminar ventas. <br>
+                    <strong>¡Esta acción no se puede deshacer!</strong>
+                </p>
+
+                <div id="eliminarVentasError" class="error-msg hidden"></div>
+
+                <div class="input-group">
+                    <label for="fechaInicioEliminar">Fecha Inicio</label>
+                    <input type="date" id="fechaInicioEliminar">
+                </div>
+
+                <div class="input-group">
+                    <label for="fechaFinEliminar">Fecha Fin</label>
+                    <input type="date" id="fechaFinEliminar">
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="btnConfirmarEliminarVentas" class="btn btn-red btn-full">
+                        🗑️ Eliminar Definitivamente
+                    </button>
+                    <button id="btnCancelarEliminarVentas" class="btn btn-gray btn-full">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: AJUSTE CAJA (GENÉRICO) -->
+        <div id="modalAjusteCaja" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header" id="ajusteTitulo">⚙️ Ajustar Saldo Caja</div>
+                <p style="font-size: 14px; color: var(--text-muted, #94a3b8); margin-bottom: 20px;">Utiliza esto para establecer el saldo inicial o corregir el monto físico en la Caja.</p>
+
+                <input type="hidden" id="ajusteCajaTipo" value="local">
+
+                <div id="ajusteError" class="error-msg hidden"></div>
+
+                <div class="input-group">
+                    <label id="ajusteLabel">Nuevo Saldo (S/)</label>
+                    <input type="number" id="ajusteMontoLocal" step="0.01" min="0" placeholder="Ej: 500.00" class="hidden">
+                    <input type="number" id="ajusteMontoChica" step="0.01" min="0" placeholder="Ej: 200.00" class="hidden">
+                    <input type="number" id="ajusteMontoYape" step="0.01" min="0" placeholder="Ej: 100.00" class="hidden">
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="btnConfirmarAjusteCaja" class="btn btn-blue btn-full" id="btnAjusteConfirmar">
+                        Guardar Ajuste
+                    </button>
+                    <button id="btnCancelarAjusteCaja" class="btn btn-gray btn-full" data-action="close-modal-ajuste-caja">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: CREAR/EDITAR PRODUCTO -->
+        <div id="modalProducto" class="modal">
+            <div class="modal-content">
+                <div class="modal-header" id="productoModalTitle">Agregar Producto</div>
+                <div id="productoError" class="error-msg hidden"></div>
+                <div class="input-group">
+                    <label for="productoNombre">Nombre</label>
+                    <input type="text" id="productoNombre" placeholder="Ej: Cerveza Pilsen">
+                </div>
+
+                <div class="input-group">
+                    <label for="productoCategoria">Categoría</label>
+                    <select id="productoCategoria" class="select-clean">
+                        <option value="Golosinas">🍬 Golosinas</option>
+                        <option value="Gaseosas">🥤 Gaseosas</option>
+                        <option value="Licores">🍺 Licores</option>
+                        <option value="Otros">📦 Otros</option>
+                    </select>
+                </div>
+
+                <!-- Precios: Costo y Venta -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label for="productoPrecioCosto">💰 Precio de Costo (S/)</label>
+                        <input type="number" id="productoPrecioCosto" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="productoPrecio">💵 Precio de Venta (S/)</label>
+                        <input type="number" id="productoPrecio" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                </div>
+
+                <!-- Margen Indicador -->
+                <div id="margenIndicador" class="hidden indicator-box-success">
+                    <div style="font-size: 12px; opacity: 0.9; margin-bottom: 3px;">📊 Margen de Ganancia</div>
+                    <div style="font-size: 20px; font-weight: bold;">
+                        <span id="margenPorcentaje">0%</span>
+                        <span style="font-size: 14px; margin-left: 10px;">
+                            (S/ <span id="margenMonto">0.00</span> por unidad)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Stock indicators -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label for="productoStock">📦 Stock Inicial</label>
+                        <input type="number" id="productoStock" min="0" placeholder="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="productoStockMin">⚠️ Stock Mínimo (Alerta)</label>
+                        <input type="number" id="productoStockMin" min="0" placeholder="Ej: 5">
+                    </div>
+                </div>
+
+                <div class="input-group warning-batch-box">
+                    <label for="productoTamanoLote" style="color: var(--accent-red-bright, #ef4444);">Tamaño de Lote (Reporte Automático)</label>
+                    <input type="number" id="productoTamanoLote" min="0" placeholder="Ej: 12 (Caja) o 0 para desactivar">
+                    <small style="display: block; color: var(--text-muted, #94a3b8); margin-top: 5px;">
+                        Si pones 12, el sistema reportará un "Lote Vendido" cada vez que vendas 12 unidades acumuladas.
+                    </small>
+                </div>
+
+                <!-- Expected total profit -->
+                <div id="gananciaTotalIndicador" class="hidden indicator-box-info">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>🎯 Ganancia Total Esperada del Lote:</span>
+                        <strong>S/ <span id="gananciaTotalEsperada">0.00</span></strong>
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="btnGuardarProducto" class="btn btn-green btn-full" data-action="guardar-producto">Guardar</button>
+                    <button id="btnCancelarProducto" class="btn btn-gray btn-full" data-action="close-modal-producto">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: AJUSTAR STOCK -->
+        <div id="modalStock" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">Ajustar Stock</div>
+                <h3 id="stockProductoNombre" style="margin-bottom: 15px; color: var(--text-muted, #94a3b8);"></h3>
+                <div class="input-group">
+                    <label>Stock Actual: <strong id="stockActual">0</strong></label>
+                </div>
+                <div class="input-group">
+                    <label for="stockAjuste">Ajuste (+/-)</label>
+                    <input type="number" id="stockAjuste" placeholder="+10 para agregar, -5 para quitar">
+                </div>
+                <div class="modal-buttons">
+                    <button id="btnGuardarStock" class="btn btn-green btn-full">Guardar</button>
+                    <button id="btnCancelarStock" class="btn btn-gray btn-full">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: REPORTAR INCIDENCIA/ERROR -->
+        <div id="modalError" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">Reportar Error</div>
+                <div class="input-group">
+                    <label for="errorMensaje">Describe el error</label>
+                    <textarea id="errorMensaje" placeholder="Describe qué sucedió... Ej: La mesa 2 no calculó bien el tiempo" rows="5"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button id="btnGuardarError" class="btn btn-orange btn-full" data-action="reportar-error">Enviar</button>
+                    <button id="btnCancelarError" class="btn btn-gray btn-full" data-action="close-modal-error">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: REGISTRAR CONSUMO DUEÑO -->
+        <div id="modalConsumoDueno" class="modal">
+            <div class="modal-content modal-large">
+                <div class="modal-large-header">
+                    <h2>🍽️ Registrar Consumo del Dueño</h2>
+                    <button class="close-btn" data-action="close-modal-consumo-dueno">×</button>
+                </div>
+
+                <div class="modal-large-body">
+                    <!-- Products available -->
+                    <div>
+                        <h3>Productos Disponibles</h3>
+                        <div id="productosConsumoDuenoGrid" class="scroll-grid-products"></div>
+                    </div>
+
+                    <!-- Cart -->
+                    <div class="billing-panel">
+                        <h3>🛒 Carrito</h3>
+                        <div id="carritoConsumoDueno" class="scroll-list-consumos"></div>
+                        <div class="billing-footer">
+                            <div class="billing-summary">
+                                <span>Total Costo:</span>
+                                <strong id="totalConsumoDueno" style="color: var(--accent-orange, #f59e0b);">S/ 0.00</strong>
+                            </div>
+                            <button id="btnGuardarConsumoDueno" class="btn btn-primary btn-full" style="padding: 12px;" data-action="guardar-consumo-dueno" disabled>
+                                💾 Guardar Consumo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: COBRO PARCIAL DE CONSUMOS -->
+        <div id="modalCobroParcial" class="modal">
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-large-header">
+                    <h2>💵 Cobro Parcial</h2>
+                    <button id="btnCerrarCobroParcial" class="close-btn">×</button>
+                </div>
+
+                <p style="color: var(--text-muted, #94a3b8); margin-bottom: 20px;">
+                    Selecciona la cantidad de cada producto que deseas cobrar. Los productos restantes quedarán en la mesa.
+                </p>
+
+                <div id="itemsCobroParcialContainer" class="scroll-list-consumos-parcial">
+                    <!-- Items rendered dynamically -->
+                </div>
+
+                <div class="billing-footer">
+                    <div class="billing-summary">
+                        <span>Total a Cobrar:</span>
+                        <strong id="totalCobroParcial" style="color: var(--accent-emerald, #10b981);">S/ 0.00</strong>
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button id="btnConfirmarCobroParcial" class="btn btn-green btn-full">
+                            ✅ Confirmar Cobro
+                        </button>
+                        <button id="btnCancelarCobroParcial" class="btn btn-gray btn-full">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: CONFIRMACIÓN DE PAGO UNIVERSAL -->
+        <div id="modalConfirmacionPago" class="modal">
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <div class="modal-header">
+                    <h2 id="pagoTitulo" style="margin: 0; font-size: 20px;">Confirmar Pago</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <div style="font-size: 14px; color: var(--text-muted, #94a3b8); margin-bottom: 5px;" id="pagoDetalle">Resumen de cobro</div>
+                    <div style="font-size: 32px; font-weight: bold; color: var(--accent-emerald, #10b981); margin-bottom: 25px;" id="pagoMonto">S/ 0.00</div>
+
+                    <label style="display: block; text-align: left; margin-bottom: 12px; font-weight: 600; font-size: 14px; color: var(--text-normal, #f1f5f9);">Selecciona Método de Pago:</label>
+                    <div class="metodos-pago-grid">
+                        <label class="metodo-pago-opt">
+                            <input type="radio" name="metodoPagoConf" value="Efectivo" checked>
+                            <div class="opt-box">💵 Efectivo</div>
+                        </label>
+                        <label class="metodo-pago-opt">
+                            <input type="radio" name="metodoPagoConf" value="Yape">
+                            <div class="opt-box">📱 Yape/Plin</div>
+                        </label>
+                        <label class="metodo-pago-opt">
+                            <input type="radio" name="metodoPagoConf" value="Mixto">
+                            <div class="opt-box">🔀 Mixto</div>
+                        </label>
+                    </div>
+
+                    <div id="pagoMixtoInputs" class="hidden pago-mixto-inputs-panel">
+                        <div class="flex-gap-10">
+                            <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                                <label style="font-size: 12px;">💵 Efectivo S/</label>
+                                <input type="number" id="pagoMixtoEfectivo" step="0.01" min="0" placeholder="0.00" style="font-weight: bold; color: var(--accent-emerald, #10b981);">
+                            </div>
+                            <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                                <label style="font-size: 12px;">📱 Yape S/</label>
+                                <input type="number" id="pagoMixtoYape" step="0.01" min="0" placeholder="0.00" readonly style="background: var(--bg-input-readonly, #1e293b); font-weight: bold; color: var(--accent-purple-bright, #c084fc);">
+                            </div>
+                        </div>
+                        <small style="color: var(--text-muted, #94a3b8); font-size: 11px; display: block; margin-top: 5px; text-align: left;">Ingresa el efectivo, el Yape se calcula automáticamente.</small>
+                    </div>
+
+                    <div class="confirm-pay-actions">
+                        <button id="btnAtrasPago" class="btn btn-gray" style="flex: 1;">Atrás</button>
+                        <button id="btnConfirmarPagoFinal" class="btn btn-green" style="flex: 2; font-size: 16px; font-weight: bold;">
+                            ✅ Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main module scripts -->
+</body>
+
+</html>
