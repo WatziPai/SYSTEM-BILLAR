@@ -309,11 +309,17 @@ async function guardarProducto() {
     });
   }
 
-  await productosService.save();
+  // Optimistic UI Update
   renderInventario();
   document.getElementById("modalProducto")?.classList.remove("show");
   _productoEditando = null;
-  toast.success("✅ Producto guardado correctamente");
+  toast.success("✅ Guardando producto...");
+
+  // Background save
+  productosService.save().catch(err => {
+    console.error("Error al guardar producto:", err);
+    toast.error("❌ Error al sincronizar con la nube");
+  });
 }
 
 // ======================================================
@@ -369,12 +375,19 @@ async function ajustarStock() {
   }
 
   _productoEditando.stock = nuevoStock;
-  await productosService.save();
+  
+  // Optimistic UI Update
   renderInventario();
   renderTablaLotes();
   document.getElementById("modalStock")?.classList.remove("show");
   _productoEditando = null;
-  toast.success("✅ Stock actualizado correctamente");
+  toast.success("✅ Ajustando stock...");
+
+  // Background save
+  productosService.save().catch(err => {
+    console.error("Error al ajustar stock:", err);
+    toast.error("❌ Error al sincronizar con la nube");
+  });
 }
 
 async function eliminarProducto(id) {
@@ -386,9 +399,16 @@ async function eliminarProducto(id) {
   if (!ok) return;
 
   state.productos = state.productos.filter((p) => p.id !== id);
-  await productosService.save(true);
+  
+  // Optimistic UI Update
   renderInventario();
-  toast.success("✅ Producto eliminado");
+  toast.success("✅ Eliminando producto...");
+
+  // Background save
+  productosService.save(true).catch(err => {
+    console.error("Error al eliminar producto:", err);
+    toast.error("❌ Error al sincronizar eliminación con la nube");
+  });
 }
 
 // ======================================================

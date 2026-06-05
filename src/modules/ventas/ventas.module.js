@@ -120,13 +120,20 @@ async function guardarVentaManual() {
   };
 
   state.ventas.push(venta);
-  await guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas });
-
+  
+  // Optimistic UI Update
   closeModalVentaManual();
   renderTablaVentas();
   calcularTotal();
   document.dispatchEvent(new CustomEvent("dashboard:changed"));
   document.dispatchEvent(new CustomEvent("caja:changed"));
+  toast.success("✅ Guardando venta...");
+
+  // Background save
+  guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas }).catch(err => {
+    console.error("Error al guardar venta:", err);
+    toast.error("❌ Error al sincronizar venta con la nube");
+  });
 
   btn.disabled = false;
   btn.textContent = "Guardar";
@@ -245,11 +252,13 @@ async function venderProducto(productoId) {
   state.ventas.push(venta);
   producto.stock -= cantidad;
 
-  const gananciaVenta = await productosService.procesarConsumoProducto(productoId, cantidad, false);
-  venta.ganancia = gananciaVenta;
+  // Background async operations
+  productosService.procesarConsumoProducto(productoId, cantidad, false).then(gananciaVenta => {
+    venta.ganancia = gananciaVenta;
+    guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas });
+  }).catch(err => console.error(err));
 
-  await guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas });
-
+  // Optimistic UI Update
   renderProductosVenta();
   renderTablaVentas();
   calcularTotal();
@@ -257,7 +266,7 @@ async function venderProducto(productoId) {
   document.dispatchEvent(new CustomEvent("dashboard:changed"));
   document.dispatchEvent(new CustomEvent("caja:changed"));
 
-  toast.success(`✅ ${cantidad}x ${producto.nombre} vendido(s) - S/ ${montoTotal.toFixed(2)} (${metodoPago})`);
+  toast.success(`✅ Procesando venta de ${cantidad}x ${producto.nombre}...`);
 
   if (btn) { btn.disabled = false; btn.textContent = "Vender"; }
 }
@@ -277,9 +286,17 @@ async function eliminarVenta(id) {
   if (!ok) return;
 
   state.ventas = state.ventas.filter((v) => v.id !== id);
-  await guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas }, true);
+  
+  // Optimistic UI Update
   renderTablaVentas();
   calcularTotal();
+  toast.success("✅ Eliminando venta...");
+
+  // Background save
+  guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas }, true).catch(err => {
+    console.error("Error al eliminar venta:", err);
+    toast.error("❌ Error al sincronizar eliminación con la nube");
+  });
 }
 
 // ======================================================

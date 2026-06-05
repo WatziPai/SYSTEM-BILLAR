@@ -65,8 +65,8 @@ export const mesasService = {
       consumos: [],
     });
     
-    await mesasService.saveMesas();
-    toast.success(`✅ Mesa de billar ${nuevoId} agregada`);
+    mesasService.saveMesas().catch(console.error);
+    toast.success(`✅ Agregando mesa de billar ${nuevoId}...`);
     debugLog("timer", "➕ Mesa billar agregada", { id: nuevoId });
     return true;
   },
@@ -98,8 +98,8 @@ export const mesasService = {
       delete state.timers[id];
     }
     
-    await mesasService.saveMesas(true);
-    toast.success(`✅ Mesa ${id} eliminada`);
+    mesasService.saveMesas(true).catch(console.error);
+    toast.success(`✅ Eliminando mesa ${id}...`);
     debugLog("timer", "🗑️ Mesa billar eliminada", { id });
     return true;
   },
@@ -113,8 +113,8 @@ export const mesasService = {
     mesa.tiempoTranscurrido = 0;
     mesa.consumos = [];
     
-    await mesasService.saveMesas();
-    toast.success(`▶️ Mesa de billar ${id} iniciada`);
+    mesasService.saveMesas().catch(console.error);
+    toast.success(`▶️ Iniciando mesa de billar ${id}...`);
     debugLog("timer", "▶️ Mesa billar iniciada", { id });
     return true;
   },
@@ -164,9 +164,9 @@ export const mesasService = {
       mesa.inicio = null;
       mesa.tiempoTranscurrido = 0;
       mesa.consumos = [];
-      await mesasService.saveMesas();
+      mesasService.saveMesas().catch(console.error);
 
-      toast.info(`⏹️ Mesa ${id} liberada sin costo (tiempo insignificante)`);
+      toast.info(`⏹️ Cerrando mesa ${id} sin costo...`);
       debugLog("timer", "⏹️ Mesa billar cerrada (sin cobro)", { id });
       return true;
     }
@@ -205,8 +205,8 @@ export const mesasService = {
 
     state.ventas.push(venta);
     
-    // Save sales
-    await guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas });
+    // Save sales in background
+    guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas }).catch(console.error);
 
     if (state.timers[id]) {
       clearInterval(state.timers[id]);
@@ -217,9 +217,9 @@ export const mesasService = {
     mesa.inicio = null;
     mesa.tiempoTranscurrido = 0;
     mesa.consumos = [];
-    await mesasService.saveMesas();
+    mesasService.saveMesas().catch(console.error);
 
-    toast.success(`✅ Mesa ${id} cobrada con éxito (S/ ${totalFinal.toFixed(2)})`);
+    toast.success(`✅ Procesando cobro de Mesa ${id} (S/ ${totalFinal.toFixed(2)})...`);
     return true;
   },
 
@@ -238,8 +238,8 @@ export const mesasService = {
       total: 0,
     });
     
-    await mesasService.saveMesasConsumo();
-    toast.success(`✅ Mesa de consumo ${nuevoId} agregada`);
+    mesasService.saveMesasConsumo().catch(console.error);
+    toast.success(`✅ Agregando mesa de consumo ${nuevoId}...`);
     debugLog("sistema", "➕ Mesa consumo agregada", { id: nuevoId });
     return true;
   },
@@ -265,8 +265,8 @@ export const mesasService = {
     if (!confirmDel) return false;
 
     state.mesasConsumo = state.mesasConsumo.filter((m) => m.id !== id);
-    await mesasService.saveMesasConsumo(true);
-    toast.success(`✅ Mesa de consumo ${id} eliminada`);
+    mesasService.saveMesasConsumo(true).catch(console.error);
+    toast.success(`✅ Eliminando mesa de consumo ${id}...`);
     debugLog("sistema", "🗑️ Mesa consumo eliminada", { id });
     return true;
   },
@@ -279,8 +279,8 @@ export const mesasService = {
     mesa.consumos = [];
     mesa.total = 0;
     
-    await mesasService.saveMesasConsumo();
-    toast.success(`▶️ Mesa de consumo ${id} iniciada`);
+    mesasService.saveMesasConsumo().catch(console.error);
+    toast.success(`▶️ Iniciando mesa de consumo ${id}...`);
     debugLog("sistema", "▶️ Mesa consumo iniciada", { id });
     return true;
   },
@@ -293,8 +293,8 @@ export const mesasService = {
       mesa.ocupada = false;
       mesa.consumos = [];
       mesa.total = 0;
-      await mesasService.saveMesasConsumo();
-      toast.info(`⏹️ Mesa de consumo ${id} liberada sin costo`);
+      mesasService.saveMesasConsumo().catch(console.error);
+      toast.info(`⏹️ Cerrando mesa de consumo ${id} sin costo...`);
       return true;
     }
 
@@ -335,15 +335,15 @@ export const mesasService = {
     };
 
     state.ventas.push(venta);
-    await guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas });
+    guardarDatosGenerico(COLLECTIONS.VENTAS, DOC_IDS.TODAS, { lista: state.ventas }).catch(console.error);
 
     const totalCobrado = mesa.total;
     mesa.ocupada = false;
     mesa.consumos = [];
     mesa.total = 0;
-    await mesasService.saveMesasConsumo();
+    mesasService.saveMesasConsumo().catch(console.error);
 
-    toast.success(`✅ Mesa de consumo ${id} cobrada (S/ ${totalCobrado.toFixed(2)})`);
+    toast.success(`✅ Procesando cobro de Mesa de consumo ${id} (S/ ${totalCobrado.toFixed(2)})...`);
     return true;
   },
 
@@ -378,17 +378,17 @@ export const mesasService = {
       });
     }
 
-    // Deduct stock, increase units sold and profits via products service
-    await productosService.procesarConsumoProducto(productoId, 1, false);
+    // Background sync
+    productosService.procesarConsumoProducto(productoId, 1, false).catch(console.error);
 
     if (tipo === "consumo") {
       mesa.total = mesa.consumos.reduce((sum, c) => sum + c.precio * c.cantidad, 0);
     }
 
     if (tipo === "billar") {
-      await mesasService.saveMesas();
+      mesasService.saveMesas().catch(console.error);
     } else {
-      await mesasService.saveMesasConsumo();
+      mesasService.saveMesasConsumo().catch(console.error);
     }
 
     toast.success(`➕ ${producto.nombre} agregado a la mesa`);
@@ -418,7 +418,7 @@ export const mesasService = {
       if (producto.tamanoLote && producto.tamanoLote > 0) {
         producto.conteoAcumuladoLote = Math.max(0, (producto.conteoAcumuladoLote || 0) - consumo.cantidad);
       }
-      await productosService.save();
+      productosService.save().catch(console.error);
     }
 
     mesa.consumos = mesa.consumos.filter((c) => c.id !== productoId);
@@ -428,9 +428,9 @@ export const mesasService = {
     }
 
     if (tipo === "billar") {
-      await mesasService.saveMesas(true);
+      mesasService.saveMesas(true).catch(console.error);
     } else {
-      await mesasService.saveMesasConsumo(true);
+      mesasService.saveMesasConsumo(true).catch(console.error);
     }
 
     toast.success(`🗑️ Producto removido de la mesa`);
@@ -492,7 +492,7 @@ export const mesasService = {
           producto.conteoAcumuladoLote = Math.max(0, (producto.conteoAcumuladoLote || 0) - reduccion);
         }
       }
-      await productosService.save();
+      productosService.save().catch(console.error);
     }
 
     consumo.cantidad = qty;
@@ -502,9 +502,9 @@ export const mesasService = {
     }
 
     if (tipo === "billar") {
-      await mesasService.saveMesas();
+      mesasService.saveMesas().catch(console.error);
     } else {
-      await mesasService.saveMesasConsumo();
+      mesasService.saveMesasConsumo().catch(console.error);
     }
 
     toast.success("✅ Consumos modificados correctamente");

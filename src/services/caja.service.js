@@ -105,9 +105,9 @@ export const cajaService = {
       };
 
       state.movimientos.unshift(nuevoMovimiento);
-      await cajaService.saveMovimientos();
+      cajaService.saveMovimientos().catch(console.error);
       
-      toast.success("✅ Movimiento registrado con éxito");
+      toast.success("✅ Registrando movimiento...");
       debugLog("stock", "Movement saved", nuevoMovimiento);
       return true;
     } catch (err) {
@@ -143,9 +143,9 @@ export const cajaService = {
       };
 
       state.movimientos.unshift(nuevaTransferencia);
-      await cajaService.saveMovimientos();
+      cajaService.saveMovimientos().catch(console.error);
       
-      toast.success(`✅ Transferencia de S/ ${valMonto.toFixed(2)} realizada con éxito.`);
+      toast.success(`✅ Registrando transferencia de S/ ${valMonto.toFixed(2)}...`);
       return true;
     } catch (err) {
       debugLog("error", "Error saving transfer:", err);
@@ -181,9 +181,9 @@ export const cajaService = {
       };
 
       state.movimientos.unshift(nuevoMovimiento);
-      await cajaService.saveMovimientos();
+      cajaService.saveMovimientos().catch(console.error);
       
-      toast.success(`✅ Transferencia de Yape a Caja ${destino === "local" ? "Local" : "Chica"} registrada por S/ ${valMonto.toFixed(2)}`);
+      toast.success(`✅ Registrando transferencia de Yape a Caja ${destino === "local" ? "Local" : "Chica"} por S/ ${valMonto.toFixed(2)}...`);
       return true;
     } catch (err) {
       debugLog("error", "Error saving Yape transfer:", err);
@@ -228,9 +228,9 @@ export const cajaService = {
       };
 
       state.movimientos.unshift(nuevoMovimiento);
-      await cajaService.saveMovimientos();
+      cajaService.saveMovimientos().catch(console.error);
       
-      toast.success(`✅ Ajuste de Caja ${cajaNombre} guardado correctamente`);
+      toast.success(`✅ Ajustando Caja ${cajaNombre}...`);
       return true;
     } catch (err) {
       debugLog("error", "Error saving adjustment:", err);
@@ -250,9 +250,9 @@ export const cajaService = {
     if (!confirmDel) return false;
 
     state.movimientos = state.movimientos.filter((m) => m.id !== id);
-    await cajaService.saveMovimientos(true);
+    cajaService.saveMovimientos(true).catch(console.error);
     
-    toast.success("✅ Operación deshecha. El saldo ha sido corregido.");
+    toast.success("✅ Revirtiendo operación...");
     return true;
   },
 
@@ -280,8 +280,8 @@ export const cajaService = {
     state.movimientos[index].ajusteTipo = esNegativo ? "negativo" : "positivo";
     state.movimientos[index].oculto = true;
 
-    await cajaService.saveMovimientos();
-    toast.success("✅ Registro ocultado sin alterar saldos reales.");
+    cajaService.saveMovimientos().catch(console.error);
+    toast.success("✅ Ocultando registro...");
     return true;
   },
 
@@ -307,9 +307,9 @@ export const cajaService = {
     if (!confirmClear) return false;
 
     state.movimientos = [];
-    await cajaService.saveMovimientos(true);
+    cajaService.saveMovimientos(true).catch(console.error);
     
-    toast.success("✅ Historial limpiado. Las ventas y reportes están intactos.");
+    toast.success("✅ Limpiando historial...");
     return true;
   }
 };
