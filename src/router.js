@@ -24,14 +24,36 @@ const TAB_RENDERS = {
 // Módulos que requieren carga diferida (los demás usan datos críticos ya en memoria)
 const MODULOS_LAZY = new Set(["caja", "inventario", "ventas", "reportes", "dashboard", "mensual", "errores", "consumoDueno"]);
 
-// Muestra un skeleton de carga dentro del panel activo
-function mostrarSkeletonCarga(panelEl) {
-  panelEl.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:#6b7280;">
-      <div style="width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-      <span style="font-size:14px;font-weight:500;">Cargando datos...</span>
-    </div>
+// Muestra un overlay de carga ENCIMA del panel (sin tocar su HTML interno)
+function mostrarOverlayCarga(panelEl) {
+  // Evitar doble overlay
+  if (panelEl.querySelector("#lazy-loading-overlay")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "lazy-loading-overlay";
+  overlay.style.cssText = [
+    "position:absolute","inset:0","z-index:10",
+    "display:flex","flex-direction:column","align-items:center","justify-content:center",
+    "gap:14px","background:rgba(255,255,255,0.85)","border-radius:8px",
+    "color:#6b7280","pointer-events:none",
+  ].join(";");
+  overlay.innerHTML = `
+    <div style="width:38px;height:38px;border:4px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <span style="font-size:14px;font-weight:500;">Cargando datos...</span>
   `;
+  // El panel necesita position relative para que el overlay lo cubra
+  const prevPosition = panelEl.style.position;
+  panelEl.style.position = "relative";
+  panelEl._prevPosition = prevPosition;
+  panelEl.appendChild(overlay);
+}
+
+function ocultarOverlayCarga(panelEl) {
+  const overlay = panelEl?.querySelector("#lazy-loading-overlay");
+  if (overlay) overlay.remove();
+  if (panelEl && panelEl._prevPosition !== undefined) {
+    panelEl.style.position = panelEl._prevPosition || "";
+    delete panelEl._prevPosition;
+  }
 }
 
 export async function navigateTo(tabName) {
@@ -59,25 +81,19 @@ export async function navigateTo(tabName) {
 
   // ── Lazy loading ──────────────────────────────────────────────────────────
   // Si este módulo tiene datos diferidos y aún no fueron cargados,
-  // mostramos un skeleton y esperamos la descarga antes de renderizar.
+  // mostramos un overlay encima del panel (sin destruir su HTML) y esperamos.
   const necesitaCarga = MODULOS_LAZY.has(tabName) && !state.modulosCargados[tabName];
 
   if (necesitaCarga) {
-    if (panelActivo) mostrarSkeletonCarga(panelActivo);
+    if (panelActivo) mostrarOverlayCarga(panelActivo);
     try {
       await cargarDatosModulo(tabName);
     } catch (err) {
       console.error(`Error cargando datos del módulo ${tabName}:`, err);
-      if (panelActivo) {
-        panelActivo.innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:12px;color:#dc3545;">
-            <span style="font-size:24px;">⚠️</span>
-            <span style="font-size:14px;font-weight:500;">Error al cargar datos. Intenta de nuevo.</span>
-          </div>
-        `;
-      }
+      ocultarOverlayCarga(panelActivo);
       return;
     }
+    ocultarOverlayCarga(panelActivo);
   }
   // ─────────────────────────────────────────────────────────────────────────
 
