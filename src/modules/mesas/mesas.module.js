@@ -269,7 +269,10 @@ function renderModalConsumo() {
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">
           <span>${c.nombre} x${c.cantidad}</span>
           <span>S/ ${(c.precio * c.cantidad).toFixed(2)}</span>
-          <button class="btn-small btn-red" data-action="eliminar-consumo" data-producto-id="${c.id}" data-mesa-id="${mesaId}" data-tipo="${tipo}" style="padding: 3px 8px; font-size: 11px;">✕</button>
+          <div style="display: flex; gap: 4px;">
+            <button class="btn-small btn-blue" data-action="editar-consumo" data-producto-id="${c.id}" data-mesa-id="${mesaId}" data-tipo="${tipo}" style="padding: 3px 8px; font-size: 11px;" title="Editar cantidad">✏️</button>
+            <button class="btn-small btn-red" data-action="eliminar-consumo" data-producto-id="${c.id}" data-mesa-id="${mesaId}" data-tipo="${tipo}" style="padding: 3px 8px; font-size: 11px;" title="Remover producto">✕</button>
+          </div>
         </div>
       `).join("")}
       <div style="padding: 10px; font-weight: bold; text-align: right; background: #f0fdf4; border-radius: 6px; margin-top: 8px;">
@@ -370,6 +373,18 @@ export function initMesasEvents() {
           else renderMesasConsumo();
         }
         break;
+
+      case "editar-consumo": {
+        const qtyStr = prompt("Ingrese la nueva cantidad:");
+        if (qtyStr !== null && qtyStr.trim() !== "") {
+          if (await mesasService.editarConsumo(productoId, mesaId, tipo, qtyStr)) {
+            renderModalConsumo();
+            if (tipo === "billar") renderMesas();
+            else renderMesasConsumo();
+          }
+        }
+        break;
+      }
 
       case "agregar-mesa":
         if (await mesasService.agregarMesa()) {
