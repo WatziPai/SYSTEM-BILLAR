@@ -6,6 +6,7 @@ import { debugLog } from "@/utils/debug";
 import { toast } from "@/components/toast";
 import { confirmDialog } from "@/components/confirm-dialog";
 import { paymentModal } from "@/components/payment-modal";
+import { debounce } from "@/utils/performance";
 
 // ======================================================
 // ================== RENDER TABLE ======================
@@ -349,9 +350,15 @@ export function initVentasEvents() {
     }
   });
 
-  // Product search
-  document.getElementById("buscarVentaProducto")?.addEventListener("input", (e) => {
-    _productosBusqueda = e.target.value;
-    renderProductosVenta();
-  });
+  // Product search con debounce para mejor performance
+  const searchInput = document.getElementById("buscarVentaProducto");
+  if (searchInput) {
+    const debouncedSearch = debounce((e) => {
+      _productosBusqueda = e.target.value;
+      renderProductosVenta();
+    }, 300);
+    
+    searchInput.removeEventListener("input", debouncedSearch);
+    searchInput.addEventListener("input", debouncedSearch);
+  }
 }
