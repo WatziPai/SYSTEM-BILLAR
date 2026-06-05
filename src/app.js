@@ -44,6 +44,15 @@ function initConfigEvents() {
 
       toast.success("✅ Configuración guardada correctamente");
     }
+
+    // Global fallback for closing modals
+    if (
+      e.target.closest(".close-btn") ||
+      (e.target.closest(".btn-gray") && e.target.closest(".btn-gray").textContent.trim().toLowerCase() === "cancelar")
+    ) {
+      const modal = e.target.closest(".modal");
+      if (modal) modal.classList.remove("show");
+    }
   });
 }
 

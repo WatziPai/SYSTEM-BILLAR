@@ -547,7 +547,7 @@
                 </div>
                 <div class="modal-buttons">
                     <button id="btnGuardarUsuario" class="btn btn-green btn-full">Guardar</button>
-                    <button id="btnCancelarUsuario" class="btn btn-gray btn-full">Cancelar</button>
+                    <button id="btnCancelarUsuario" class="btn btn-gray btn-full" data-action="close-modal-usuario">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -624,7 +624,7 @@
             <div class="modal-content modal-large">
                 <div class="modal-large-header">
                     <h2>Vender Productos</h2>
-                    <button id="btnCerrarVentaProductos" class="close-btn">×</button>
+                    <button id="btnCerrarVentaProductos" class="close-btn" data-action="close-venta-productos">×</button>
                 </div>
                 <div style="margin-bottom: 15px; width: 100%;">
                     <input type="text" id="buscarVentaProducto" placeholder="🔍 Buscar producto..." style="width: 100%;">
@@ -764,7 +764,7 @@
                     <button id="btnConfirmarEliminarVentas" class="btn btn-red btn-full">
                         🗑️ Eliminar Definitivamente
                     </button>
-                    <button id="btnCancelarEliminarVentas" class="btn btn-gray btn-full">Cancelar</button>
+                    <button id="btnCancelarEliminarVentas" class="btn btn-gray btn-full" data-action="close-eliminar-ventas">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -886,8 +886,8 @@
                     <input type="number" id="stockAjuste" placeholder="+10 para agregar, -5 para quitar">
                 </div>
                 <div class="modal-buttons">
-                    <button id="btnGuardarStock" class="btn btn-green btn-full">Guardar</button>
-                    <button id="btnCancelarStock" class="btn btn-gray btn-full">Cancelar</button>
+                    <button id="btnGuardarStock" class="btn btn-green btn-full" data-action="ajustar-stock">Guardar</button>
+                    <button id="btnCancelarStock" class="btn btn-gray btn-full" data-action="close-modal-stock">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -945,7 +945,7 @@
             <div class="modal-content" style="max-width: 700px;">
                 <div class="modal-large-header">
                     <h2>💵 Cobro Parcial</h2>
-                    <button id="btnCerrarCobroParcial" class="close-btn">×</button>
+                    <button id="btnCerrarCobroParcial" class="close-btn" data-action="close-cobro-parcial">×</button>
                 </div>
 
                 <p style="color: var(--text-muted, #94a3b8); margin-bottom: 20px;">
@@ -966,7 +966,7 @@
                         <button id="btnConfirmarCobroParcial" class="btn btn-green btn-full">
                             ✅ Confirmar Cobro
                         </button>
-                        <button id="btnCancelarCobroParcial" class="btn btn-gray btn-full">Cancelar</button>
+                        <button id="btnCancelarCobroParcial" class="btn btn-gray btn-full" data-action="close-cobro-parcial">Cancelar</button>
                     </div>
                 </div>
             </div>
