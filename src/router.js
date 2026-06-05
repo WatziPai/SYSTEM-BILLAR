@@ -124,6 +124,9 @@ export function initRouter() {
   const initialTab = state.tabActual || "mesas";
   navigateTo(initialTab);
 
+  // Calcular y mostrar el total del día en el header
+  calcularTotal();
+
   debugLog("sistema", "🧭 Router inicializado");
 }
 

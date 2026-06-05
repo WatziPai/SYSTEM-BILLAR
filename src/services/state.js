@@ -43,8 +43,9 @@ export const state = {
 // ======================================================
 // Solo carga lo indispensable para mostrar las mesas rápidamente:
 // Usuarios, Configuración, Productos y las dos colecciones de Mesas.
+// También carga ventas y cierres para calcular el "Total del Día" en el header
 export async function cargarDatosCriticos() {
-  debugLog("firebase", "⚡ [Lazy] Cargando datos críticos (Mesas + Config)...");
+  debugLog("firebase", "⚡ [Lazy] Cargando datos críticos (Mesas + Config + Ventas)...");
   const tiempoInicio = Date.now();
 
   try {
@@ -54,12 +55,16 @@ export async function cargarDatosCriticos() {
       productosData,
       mesasData,
       mesasConsumoData,
+      ventasData,
+      cierresData,
     ] = await Promise.all([
       dbService.get(COLLECTIONS.USUARIOS, DOC_IDS.TODOS),
       dbService.get(COLLECTIONS.CONFIGURACION, DOC_IDS.GENERAL),
       dbService.get(COLLECTIONS.PRODUCTOS, DOC_IDS.TODOS),
       dbService.get(COLLECTIONS.MESAS, DOC_IDS.BILLAR),
       dbService.get(COLLECTIONS.MESAS, DOC_IDS.CONSUMO),
+      dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS),
+      dbService.get(COLLECTIONS.CIERRES, DOC_IDS.HISTORIAL),
     ]);
 
     // Usuarios y configuración
@@ -104,6 +109,16 @@ export async function cargarDatosCriticos() {
         total: 0,
       }));
       await guardarDatosGenerico(COLLECTIONS.MESAS, DOC_IDS.CONSUMO, { lista: state.mesasConsumo }, true);
+    }
+
+    // Ventas (necesarias para mostrar "Total del Día" en el header)
+    state.ventas = ventasData?.lista || [];
+    state.modulosCargados.ventas = true;
+
+    // Cierres (necesarios para calcular el último cierre y filtrar ventas del día)
+    state.cierres = cierresData?.lista || [];
+    if (state.cierres.length > 0) {
+      state.ultimoCierre = state.cierres[state.cierres.length - 1].timestamp;
     }
 
     const tiempoTotal = Date.now() - tiempoInicio;
@@ -154,11 +169,10 @@ export async function cargarDatosModulo(modulo) {
       // ── Ventas ────────────────────────────────────────
       case "ventas": {
         if (ya.ventas) return;
-        debugLog("firebase", "⏳ [Lazy] Cargando módulo: Ventas...");
-        const ventasData = await dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS);
-        state.ventas = ventasData?.lista || [];
+        // Los datos de ventas ya se cargan en cargarDatosCriticos
+        // Solo marcamos el módulo como cargado
         ya.ventas = true;
-        debugLog("firebase", "✅ [Lazy] Módulo Ventas listo");
+        debugLog("firebase", "✅ [Lazy] Módulo Ventas listo (datos ya cargados)");
         break;
       }
 
@@ -168,26 +182,17 @@ export async function cargarDatosModulo(modulo) {
       case "mensual": {
         if (ya.reportes) return;
         debugLog("firebase", "⏳ [Lazy] Cargando módulo: Reportes...");
-        const [cierresData, consumosDuenoData, ventasReportesData] = await Promise.all([
-          dbService.get(COLLECTIONS.CIERRES, DOC_IDS.HISTORIAL),
+        const [consumosDuenoData] = await Promise.all([
           dbService.get(COLLECTIONS.CONSUMOS, DOC_IDS.DUENO),
-          // Solo carga ventas si aún no fue cargado por el módulo de ventas
-          ya.ventas ? Promise.resolve(null) : dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS),
         ]);
-        state.cierres = cierresData?.lista || [];
-        if (state.cierres.length > 0) {
-          state.ultimoCierre = state.cierres[state.cierres.length - 1].timestamp;
-        }
+        // Los cierres y ventas ya se cargaron en cargarDatosCriticos
         state.consumosDueno = (consumosDuenoData?.lista || []).map((c) => ({
           ...c,
           total: c.total !== undefined ? c.total : c.totalVenta || 0,
         }));
-        if (ventasReportesData) {
-          state.ventas = ventasReportesData.lista || [];
-          ya.ventas = true;
-        }
         ya.reportes = true;
         ya.consumoDueno = true;
+        ya.ventas = true;
         debugLog("firebase", "✅ [Lazy] Módulo Reportes listo");
         break;
       }

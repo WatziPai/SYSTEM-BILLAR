@@ -75,6 +75,11 @@ export function calcularTotal() {
   if (totalEl) totalEl.textContent = `S/ ${total.toFixed(2)}`;
 }
 
+// Función para actualizar solo el total del día en el header (sin renderizar la tabla)
+export function actualizarTotalHeader() {
+  calcularTotal();
+}
+
 // ======================================================
 // =============== VENTA MANUAL ========================
 // ======================================================
