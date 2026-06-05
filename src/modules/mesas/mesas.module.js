@@ -397,6 +397,10 @@ export function initMesasEvents() {
           renderMesasConsumo();
         }
         break;
+
+      case "close-modal-consumo":
+        document.getElementById("modalConsumo")?.classList.remove("show");
+        break;
     }
   });
 

@@ -318,6 +318,12 @@ export function initVentasEvents() {
       case "close-venta-productos":
         closeModalVentaProductos();
         break;
+      case "show-eliminar-ventas":
+        document.getElementById("modalEliminarVentas")?.classList.add("show");
+        break;
+      case "close-eliminar-ventas":
+        document.getElementById("modalEliminarVentas")?.classList.remove("show");
+        break;
     }
   });
 

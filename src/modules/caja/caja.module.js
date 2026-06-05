@@ -159,6 +159,45 @@ export function initCajaEvents() {
       case "close-modal-movimiento":
         document.getElementById("modalMovimiento")?.classList.remove("show");
         break;
+      case "show-modal-transferencia":
+        document.getElementById("modalTransferencia")?.classList.add("show");
+        break;
+      case "close-modal-transferencia":
+        document.getElementById("modalTransferencia")?.classList.remove("show");
+        break;
+      case "show-modal-transferencia-yape":
+        document.getElementById("modalTransferenciaYape")?.classList.add("show");
+        break;
+      case "close-modal-transferencia-yape":
+        document.getElementById("modalTransferenciaYape")?.classList.remove("show");
+        break;
+      case "show-modal-ajuste-caja": {
+        const cajaType = el?.dataset.caja;
+        const modal = document.getElementById("modalAjusteCaja");
+        if (modal) {
+          const tituloEl = document.getElementById("ajusteTitulo");
+          if (tituloEl) tituloEl.textContent = `⚖️ Ajustar Saldo ${cajaType === "local" ? "Caja Local" : cajaType === "chica" ? "Caja Chica" : "Yape"}`;
+          // Store target type and show correct input
+          modal.dataset.cajaTarget = cajaType;
+          document.getElementById("ajusteMontoLocal")?.classList.toggle("hidden", cajaType !== "local");
+          document.getElementById("ajusteMontoChica")?.classList.toggle("hidden", cajaType !== "chica");
+          document.getElementById("ajusteMontoYape")?.classList.toggle("hidden", cajaType !== "yape");
+          // Clear inputs
+          ["ajusteMontoLocal","ajusteMontoChica","ajusteMontoYape"].forEach(id => { const el2 = document.getElementById(id); if(el2) el2.value = ""; });
+          modal.classList.add("show");
+        }
+        break;
+      }
+      case "close-modal-ajuste-caja":
+        document.getElementById("modalAjusteCaja")?.classList.remove("show");
+        break;
+      case "guardar-ajuste-caja": {
+        const modal = document.getElementById("modalAjusteCaja");
+        const caja = modal?.dataset.cajaTarget || "local";
+        await ajustarSaldoCaja(caja);
+        modal?.classList.remove("show");
+        break;
+      }
       case "guardar-movimiento":
         await guardarMovimiento();
         break;
