@@ -72,7 +72,7 @@ async function cerrarSesionPorInactividad() {
   }
 
   mostrarPantallaLogin();
-  toast.warning("🔒 Tu sesión se cerró automáticamente por 30 minutos de inactividad.");
+  toast.warning("🔒 Tu sesión se cerró automáticamente por 5 horas de inactividad.");
 }
 
 // ========== SCREEN TRANSITIONS ==========

@@ -22,7 +22,7 @@ export const DOC_IDS = {
 };
 
 export const SECURITY = {
-  TIEMPO_EXPIRACION: 30 * 60 * 1000, // 30 minutes in milliseconds
+  TIEMPO_EXPIRACION: 5 * 60 * 60 * 1000, // 5 hours in milliseconds
 };
 
 export const USE_LOCAL_STORAGE = false; // Set to true to mock Firestore in development if needed
