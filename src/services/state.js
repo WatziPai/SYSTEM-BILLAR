@@ -26,73 +26,60 @@ export const state = {
   limiteCierres: 10,
   tabActual: null,
   ordenInventarioActual: "default",
-  timers: {} // timer references
+  timers: {}, // timer references
+  // Tracks which lazy modules have already been fetched from Firebase
+  modulosCargados: {
+    ventas: false,
+    caja: false,
+    inventario: false,
+    reportes: false,
+    errores: false,
+    consumoDueno: false,
+  },
 };
 
-// Loader function
-export async function cargarDatos() {
-  debugLog("firebase", "📂 Cargando datos desde almacenamiento...");
+// ======================================================
+// ========= FASE 1: Datos críticos al iniciar sesión ===
+// ======================================================
+// Solo carga lo indispensable para mostrar las mesas rápidamente:
+// Usuarios, Configuración, Productos y las dos colecciones de Mesas.
+export async function cargarDatosCriticos() {
+  debugLog("firebase", "⚡ [Lazy] Cargando datos críticos (Mesas + Config)...");
   const tiempoInicio = Date.now();
 
   try {
     const [
       usuariosData,
       configData,
-      ventasData,
       productosData,
-      erroresData,
-      cierresData,
-      consumosDuenoData,
-      lotesData,
       mesasData,
       mesasConsumoData,
-      movimientosData,
     ] = await Promise.all([
       dbService.get(COLLECTIONS.USUARIOS, DOC_IDS.TODOS),
       dbService.get(COLLECTIONS.CONFIGURACION, DOC_IDS.GENERAL),
-      dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS),
       dbService.get(COLLECTIONS.PRODUCTOS, DOC_IDS.TODOS),
-      dbService.get(COLLECTIONS.ERRORES, DOC_IDS.TODOS),
-      dbService.get(COLLECTIONS.CIERRES, DOC_IDS.HISTORIAL),
-      dbService.get(COLLECTIONS.CONSUMOS, DOC_IDS.DUENO),
-      dbService.get(COLLECTIONS.LOTES, DOC_IDS.TODOS),
       dbService.get(COLLECTIONS.MESAS, DOC_IDS.BILLAR),
       dbService.get(COLLECTIONS.MESAS, DOC_IDS.CONSUMO),
-      dbService.get(COLLECTIONS.CAJA, DOC_IDS.HISTORIAL),
     ]);
 
-    // Parse and bind to state
+    // Usuarios y configuración
     state.usuarios = usuariosData?.lista || [];
-    
+
     if (configData) {
       state.config = {
         tarifaHora: parseFloat(configData.tarifaHora) || 5.00,
-        tarifaExtra5Min: parseFloat(configData.tarifaExtra5Min) || 1.00
+        tarifaExtra5Min: parseFloat(configData.tarifaExtra5Min) || 1.00,
       };
-      
-      // Update UI input values if they exist
       const inputTarifa = document.getElementById("tarifaHora");
       const inputExtra = document.getElementById("tarifaExtra5Min");
       if (inputTarifa) inputTarifa.value = state.config.tarifaHora.toFixed(2);
       if (inputExtra) inputExtra.value = state.config.tarifaExtra5Min.toFixed(2);
     }
 
-    state.ventas = ventasData?.lista || [];
+    // Productos (necesarios para el modal de consumos en mesas)
     state.productos = productosData?.lista || [];
-    state.erroresReportados = erroresData?.lista || [];
-    state.cierres = cierresData?.lista || [];
-    state.lotesAgotados = lotesData?.lista || [];
-    state.movimientos = movimientosData?.lista || [];
 
-    if (state.cierres.length > 0) {
-      state.ultimoCierre = state.cierres[state.cierres.length - 1].timestamp;
-    }
-
-    state.consumosDueno = (consumosDuenoData?.lista || []).map((c) => ({
-      ...c,
-      total: c.total !== undefined ? c.total : c.totalVenta || 0,
-    }));
-
+    // Mesas de billar
     if (mesasData && mesasData.lista) {
       state.mesas = mesasData.lista;
     } else {
@@ -103,11 +90,10 @@ export async function cargarDatos() {
         tiempoTranscurrido: 0,
         consumos: [],
       }));
-      await guardarDatosGenerico(COLLECTIONS.MESAS, DOC_IDS.BILLAR, {
-        lista: state.mesas,
-      }, true);
+      await guardarDatosGenerico(COLLECTIONS.MESAS, DOC_IDS.BILLAR, { lista: state.mesas }, true);
     }
 
+    // Mesas de consumo
     if (mesasConsumoData && mesasConsumoData.lista) {
       state.mesasConsumo = mesasConsumoData.lista;
     } else {
@@ -115,17 +101,128 @@ export async function cargarDatos() {
         id: i + 1,
         ocupada: false,
         consumos: [],
-        total: 0
+        total: 0,
       }));
-      await guardarDatosGenerico(COLLECTIONS.MESAS, DOC_IDS.CONSUMO, {
-        lista: state.mesasConsumo,
-      }, true);
+      await guardarDatosGenerico(COLLECTIONS.MESAS, DOC_IDS.CONSUMO, { lista: state.mesasConsumo }, true);
     }
 
     const tiempoTotal = Date.now() - tiempoInicio;
-    debugLog("firebase", `✅ Todos los datos cargados en paralelo en ${tiempoTotal}ms`);
+    debugLog("firebase", `✅ [Lazy] Datos críticos cargados en ${tiempoTotal}ms`);
   } catch (error) {
-    debugLog("error", "❌ Error cargando datos:", error);
+    debugLog("error", "❌ Error cargando datos críticos:", error);
+    throw error;
+  }
+}
+
+// ======================================================
+// ========= FASE 2: Datos diferidos por módulo =========
+// ======================================================
+// Descarga solo los datos que necesita la pestaña que el usuario acaba
+// de activar. Si el módulo ya fue cargado antes, no hace nada.
+export async function cargarDatosModulo(modulo) {
+  const ya = state.modulosCargados;
+
+  try {
+    switch (modulo) {
+
+      // ── Caja ──────────────────────────────────────────
+      case "caja": {
+        if (ya.caja) return;
+        debugLog("firebase", "⏳ [Lazy] Cargando módulo: Caja...");
+        const movimientosData = await dbService.get(COLLECTIONS.CAJA, DOC_IDS.HISTORIAL);
+        state.movimientos = movimientosData?.lista || [];
+        ya.caja = true;
+        debugLog("firebase", "✅ [Lazy] Módulo Caja listo");
+        break;
+      }
+
+      // ── Inventario ────────────────────────────────────
+      case "inventario": {
+        if (ya.inventario) return;
+        debugLog("firebase", "⏳ [Lazy] Cargando módulo: Inventario...");
+        const [productosData, lotesData] = await Promise.all([
+          dbService.get(COLLECTIONS.PRODUCTOS, DOC_IDS.TODOS),
+          dbService.get(COLLECTIONS.LOTES, DOC_IDS.TODOS),
+        ]);
+        state.productos = productosData?.lista || [];
+        state.lotesAgotados = lotesData?.lista || [];
+        ya.inventario = true;
+        debugLog("firebase", "✅ [Lazy] Módulo Inventario listo");
+        break;
+      }
+
+      // ── Ventas ────────────────────────────────────────
+      case "ventas": {
+        if (ya.ventas) return;
+        debugLog("firebase", "⏳ [Lazy] Cargando módulo: Ventas...");
+        const ventasData = await dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS);
+        state.ventas = ventasData?.lista || [];
+        ya.ventas = true;
+        debugLog("firebase", "✅ [Lazy] Módulo Ventas listo");
+        break;
+      }
+
+      // ── Reportes / Dashboard / Mensual ────────────────
+      case "reportes":
+      case "dashboard":
+      case "mensual": {
+        if (ya.reportes) return;
+        debugLog("firebase", "⏳ [Lazy] Cargando módulo: Reportes...");
+        const [cierresData, consumosDuenoData, ventasReportesData] = await Promise.all([
+          dbService.get(COLLECTIONS.CIERRES, DOC_IDS.HISTORIAL),
+          dbService.get(COLLECTIONS.CONSUMOS, DOC_IDS.DUENO),
+          // Solo carga ventas si aún no fue cargado por el módulo de ventas
+          ya.ventas ? Promise.resolve(null) : dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS),
+        ]);
+        state.cierres = cierresData?.lista || [];
+        if (state.cierres.length > 0) {
+          state.ultimoCierre = state.cierres[state.cierres.length - 1].timestamp;
+        }
+        state.consumosDueno = (consumosDuenoData?.lista || []).map((c) => ({
+          ...c,
+          total: c.total !== undefined ? c.total : c.totalVenta || 0,
+        }));
+        if (ventasReportesData) {
+          state.ventas = ventasReportesData.lista || [];
+          ya.ventas = true;
+        }
+        ya.reportes = true;
+        ya.consumoDueno = true;
+        debugLog("firebase", "✅ [Lazy] Módulo Reportes listo");
+        break;
+      }
+
+      // ── Errores ───────────────────────────────────────
+      case "errores": {
+        if (ya.errores) return;
+        debugLog("firebase", "⏳ [Lazy] Cargando módulo: Errores...");
+        const erroresData = await dbService.get(COLLECTIONS.ERRORES, DOC_IDS.TODOS);
+        state.erroresReportados = erroresData?.lista || [];
+        ya.errores = true;
+        debugLog("firebase", "✅ [Lazy] Módulo Errores listo");
+        break;
+      }
+
+      // ── Consumo Dueño ─────────────────────────────────
+      case "consumoDueno": {
+        if (ya.consumoDueno) return;
+        debugLog("firebase", "⏳ [Lazy] Cargando módulo: Consumo Dueño...");
+        const consumosData = await dbService.get(COLLECTIONS.CONSUMOS, DOC_IDS.DUENO);
+        state.consumosDueno = (consumosData?.lista || []).map((c) => ({
+          ...c,
+          total: c.total !== undefined ? c.total : c.totalVenta || 0,
+        }));
+        ya.consumoDueno = true;
+        debugLog("firebase", "✅ [Lazy] Módulo Consumo Dueño listo");
+        break;
+      }
+
+      default:
+        // Módulo sin datos diferidos (e.g. "mesas"), no hace nada
+        break;
+    }
+  } catch (error) {
+    debugLog("error", `❌ Error cargando módulo diferido "${modulo}":`, error);
     throw error;
   }
 }

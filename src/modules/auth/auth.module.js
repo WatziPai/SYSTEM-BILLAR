@@ -1,5 +1,5 @@
 import { authService } from "@/services/auth.service";
-import { state, cargarDatos, guardarDatosGenerico } from "@/services/state";
+import { state, cargarDatosCriticos } from "@/services/state";
 import { COLLECTIONS, DOC_IDS, SECURITY } from "@/utils/constants";
 import { debugLog } from "@/utils/debug";
 import { toast } from "@/components/toast";
@@ -262,7 +262,7 @@ export async function initAuth(onLoginSuccess) {
       }
 
       try {
-        await cargarDatos();
+        await cargarDatosCriticos(); // ⚡ Carga Diferida: solo datos críticos (Mesas, Config, Productos)
 
         const username = user.email.split("@")[0];
         const usuario = state.usuarios.find((u) => u.username === username);
