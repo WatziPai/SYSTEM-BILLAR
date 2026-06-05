@@ -92,8 +92,11 @@ function renderHistorialCierres() {
   }
 
   const isAdmin = (state.usuarioActual?.rol || "").toLowerCase() === "admin";
+  const cierresOrdenados = [...state.cierres].reverse();
+  const limite = state.limiteCierres || 10;
+  const cierresMostrar = cierresOrdenados.slice(0, limite);
 
-  container.innerHTML = [...state.cierres].reverse().map((c) => `
+  container.innerHTML = cierresMostrar.map((c) => `
     <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:12px;border-left:4px solid #10b981;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
       <div>
         <strong style="font-size:14px;">${c.fecha}</strong>
@@ -109,6 +112,17 @@ function renderHistorialCierres() {
       </div>
     </div>
   `).join("");
+
+  if (state.cierres.length > limite) {
+    container.innerHTML += `
+      <div style="text-align: center; padding: 15px;">
+        <button data-action="cargar-mas-cierres" style="background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">
+          Ver más reportes (+10)
+        </button>
+        <p style="font-size: 11px; color: #666; margin-top: 5px;">Mostrando ${limite} de ${state.cierres.length} reportes</p>
+      </div>
+    `;
+  }
 }
 
 // ======================================================
@@ -279,10 +293,10 @@ function renderGraficaMensual(anio, hayDatos) {
       ${mesesData.map((m) => {
         const pct = (m.total / maxVal) * 100;
         return `
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <span style="font-size:10px;color:#666;font-weight:600;">${m.total > 0 ? "S/"+Math.round(m.total) : ""}</span>
-            <div style="width:100%;background:linear-gradient(180deg,#10b981,#059669);border-radius:6px 6px 0 0;height:${pct}%;min-height:${m.total > 0 ? 4 : 0}px;transition:height .5s ease;"></div>
-            <span style="font-size:10px;color:#666;font-weight:600;">${m.nombre}</span>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;">
+            <span style="font-size:10px;color:#666;font-weight:600;margin-bottom:2px;">${m.total > 0 ? "S/"+Math.round(m.total) : ""}</span>
+            <div style="width:80%;max-width:40px;background:linear-gradient(180deg,#10b981,#059669);border-radius:6px 6px 0 0;height:${pct}%;min-height:${m.total > 0 ? 4 : 0}px;transition:height .5s ease;"></div>
+            <span style="font-size:10px;color:#666;font-weight:600;margin-top:4px;">${m.nombre}</span>
           </div>
         `;
       }).join("")}
@@ -438,6 +452,11 @@ export function initReportesEvents() {
 
       case "actualizar-mensual":
         renderMensual();
+        break;
+
+      case "cargar-mas-cierres":
+        state.limiteCierres = (state.limiteCierres || 10) + 10;
+        renderHistorialCierres();
         break;
     }
   });

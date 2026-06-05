@@ -17,19 +17,19 @@ class ConfirmDialogSystem {
       this.close();
 
       this.dialogEl = document.createElement("div");
-      this.dialogEl.className = "confirm-overlay";
+      this.dialogEl.className = "confirm-dialog-overlay";
 
       const confirmBtnClass = isDestructive ? "btn-red" : "btn-green";
 
       this.dialogEl.innerHTML = `
-        <div class="confirm-card">
+        <div class="confirm-dialog">
           <div class="confirm-header ${isDestructive ? 'destructive' : ''}">
             <h3>${title}</h3>
           </div>
           <div class="confirm-body">
             <p>${message.replace(/\n/g, '<br>')}</p>
           </div>
-          <div class="confirm-footer">
+          <div class="confirm-dialog-btns">
             <button id="confirmCancelBtn" class="btn btn-gray">${cancelText}</button>
             <button id="confirmOkBtn" class="btn ${confirmBtnClass}">${confirmText}</button>
           </div>
@@ -42,7 +42,7 @@ class ConfirmDialogSystem {
       // Trigger animation
       requestAnimationFrame(() => {
         this.dialogEl.classList.add("confirm-overlay-show");
-        this.dialogEl.querySelector(".confirm-card").classList.add("confirm-card-show");
+        this.dialogEl.querySelector(".confirm-dialog").classList.add("confirm-card-show");
       });
 
       const cancelBtn = this.dialogEl.querySelector("#confirmCancelBtn");
@@ -69,7 +69,7 @@ class ConfirmDialogSystem {
 
   close() {
     if (this.dialogEl && this.dialogEl.parentNode) {
-      const card = this.dialogEl.querySelector(".confirm-card");
+      const card = this.dialogEl.querySelector(".confirm-dialog");
       if (card) card.classList.remove("confirm-card-show");
       this.dialogEl.classList.remove("confirm-overlay-show");
       

@@ -8,9 +8,15 @@ import { confirmDialog } from "@/components/confirm-dialog";
 // ========== INACTIVITY MONITOR ==========
 let timerInactividad = null;
 
+let lastActivityUpdate = 0;
+
 function actualizarTimestampActividad() {
   if (state.usuarioActual) {
-    localStorage.setItem("ultimaActividad", Date.now().toString());
+    const now = Date.now();
+    if (now - lastActivityUpdate > 1000) {
+      localStorage.setItem("ultimaActividad", now.toString());
+      lastActivityUpdate = now;
+    }
   }
 }
 

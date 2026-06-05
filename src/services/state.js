@@ -23,7 +23,8 @@ export const state = {
   },
   limiteVentas: 20,
   limiteMovimientos: 20,
-  tabActual: "mesas",
+  limiteCierres: 10,
+  tabActual: null,
   ordenInventarioActual: "default",
   timers: {} // timer references
 };
