@@ -5,13 +5,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎱 Sistema de Gestión de Billar - Premium</title>
-    <!-- Google Fonts for premium typography -->
+    
+    <!-- DNS Prefetch para servicios externos -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+    
+    <!-- Preconnect para conexiones críticas -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    
+    <!-- Google Fonts for premium typography -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Clean import of main CSS compiled by Vite -->
-  <script type="module" crossorigin src="/SYSTEM-BILLAR/assets/index-DSQXLh-b.js"></script>
-  <link rel="stylesheet" crossorigin href="/SYSTEM-BILLAR/assets/index-Mq8tkBzm.css">
+    
+    <!-- Preload critical CSS -->
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2d7a4d">
+    <meta name="description" content="Sistema de Gestión de Billar - Administración eficiente de mesas, ventas e inventario">
+  <script type="module" crossorigin src="/SYSTEM-BILLAR/assets/index-D6RV7C4k.js"></script>
+  <link rel="modulepreload" crossorigin href="/SYSTEM-BILLAR/assets/firebase-4r5xFTAr.js">
+  <link rel="modulepreload" crossorigin href="/SYSTEM-BILLAR/assets/services-B9p7zc3R.js">
+  <link rel="modulepreload" crossorigin href="/SYSTEM-BILLAR/assets/modules-mesas-Du_l0ODp.js">
+  <link rel="modulepreload" crossorigin href="/SYSTEM-BILLAR/assets/modules-ventas-BXQf9RRE.js">
+  <link rel="modulepreload" crossorigin href="/SYSTEM-BILLAR/assets/modules-inventario-BBCZfFLH.js">
+  <link rel="modulepreload" crossorigin href="/SYSTEM-BILLAR/assets/modules-caja-AgRheDmr.js">
+  <link rel="modulepreload" crossorigin href="/SYSTEM-BILLAR/assets/modules-reportes-DU6RZHiB.js">
+  <link rel="stylesheet" crossorigin href="/SYSTEM-BILLAR/assets/index-DRNAuzhs.css">
 </head>
 
 <body>
@@ -1025,6 +1046,21 @@
     </div>
 
     <!-- Main module scripts -->
+    
+    <!-- Service Worker Registration for Performance & Caching -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/SYSTEM-BILLAR/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registrado:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 
 </html>
