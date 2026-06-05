@@ -16,7 +16,7 @@ export const modalService = {
     
     // Trigger transition next frame
     requestAnimationFrame(() => {
-      modal.classList.add("modal-open");
+      modal.classList.add("show");
     });
     
     debugLog("sistema", `🔓 Modal opened: ${modalId}`);
@@ -44,7 +44,7 @@ export const modalService = {
     const modal = document.getElementById(modalId);
     if (!modal) return;
 
-    modal.classList.remove("modal-open");
+    modal.classList.remove("show");
     
     // Clean up event listeners
     const escHandler = activeEscHandlers.get(modalId);
@@ -61,7 +61,7 @@ export const modalService = {
 
     // Wait for transition to finish
     setTimeout(() => {
-      if (!modal.classList.contains("modal-open")) {
+      if (!modal.classList.contains("show")) {
         modal.classList.add("hidden");
       }
     }, 200);
