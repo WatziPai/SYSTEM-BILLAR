@@ -5,6 +5,7 @@ import { debugLog } from "@/utils/debug";
 import { toast } from "@/components/toast";
 import { confirmDialog } from "@/components/confirm-dialog";
 import { paymentModal } from "@/components/payment-modal";
+import { ventasService } from "@/services/ventas.service";
 
 // ======================================================
 // =================== BILLAR TABLES ===================
@@ -260,10 +261,19 @@ function renderModalConsumo() {
 
   // List existing consumptions
   const consumos = mesa.consumos || [];
+  const total = consumos.reduce((sum, c) => sum + c.precio * c.cantidad, 0);
+
+  // Update total and close button text in the billing footer
+  const totalConsumoEl = document.getElementById("totalConsumo");
+  if (totalConsumoEl) totalConsumoEl.textContent = `S/ ${total.toFixed(2)}`;
+  const btnCerrarMesa = document.getElementById("btnCerrarMesa");
+  if (btnCerrarMesa) {
+    btnCerrarMesa.textContent = `💰 Cerrar Mesa y Cobrar Todo (Total: S/ ${total.toFixed(2)})`;
+  }
+
   if (consumos.length === 0) {
     listaContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 15px;">Sin consumos aún</p>';
   } else {
-    const total = consumos.reduce((sum, c) => sum + c.precio * c.cantidad, 0);
     listaContainer.innerHTML = `
       ${consumos.map((c) => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">
@@ -319,10 +329,167 @@ function ordenarProductosPorCategoria(productos) {
 }
 
 // ======================================================
+// =================== COBRO PARCIAL ===================
+async function handleCobroParcial() {
+  const { mesaId, tipo } = _modalConsumoState;
+  const mesa = tipo === "billar"
+    ? state.mesas.find((m) => m.id === mesaId)
+    : state.mesasConsumo.find((m) => m.id === mesaId);
+
+  if (!mesa) return;
+  const consumos = mesa.consumos || [];
+  if (consumos.length === 0) {
+    toast.error("⚠️ No hay consumos en esta mesa para cobrar");
+    return;
+  }
+
+  // Create dedicated selection modal
+  const itemsACobrar = await new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-dialog-overlay confirm-overlay-show";
+    overlay.style.cssText = "z-index:10001;";
+
+    const itemsHtml = consumos.map((c, i) => `
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 8px; border-bottom:1px solid #eee;">
+        <input type="checkbox" id="parcial-check-${i}" checked style="width:18px;height:18px;cursor:pointer; accent-color:#2d7a4d;">
+        <label for="parcial-check-${i}" style="flex:1; cursor:pointer; font-weight:500;">${c.nombre} <span style="color:#888;">x${c.cantidad}</span></label>
+        <span style="color:#2d7a4d; font-weight:600; min-width:70px; text-align:right;">S/ ${(c.precio * c.cantidad).toFixed(2)}</span>
+        <input type="number" id="parcial-qty-${i}" value="${c.cantidad}" min="1" max="${c.cantidad}"
+          style="width:55px; text-align:center; border:1px solid #ccc; border-radius:6px; padding:5px; font-size:13px;">
+      </div>
+    `).join("");
+
+    overlay.innerHTML = `
+      <div class="confirm-dialog confirm-card-show" style="max-width:480px; width:90%;">
+        <div class="confirm-header">
+          <h3>💵 Cobrar Parcial</h3>
+        </div>
+        <div class="confirm-body" style="padding:0;">
+          <p style="padding:12px 16px; color:#666; font-size:13px;">Selecciona los productos y cantidades a cobrar ahora:</p>
+          <div style="max-height:280px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px; margin:0 16px 16px;">
+            ${itemsHtml}
+          </div>
+          <div style="padding:8px 16px 16px; text-align:right; font-weight:700; font-size:15px; color:#2d7a4d;" id="parcialTotalPreview">
+            Total seleccionado: S/ 0.00
+          </div>
+        </div>
+        <div class="confirm-dialog-btns">
+          <button id="parcialCancelBtn" class="btn btn-gray">Cancelar</button>
+          <button id="parcialOkBtn" class="btn btn-green">Cobrar</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Live total preview
+    const updateTotal = () => {
+      let t = 0;
+      consumos.forEach((c, i) => {
+        const check = overlay.querySelector(`#parcial-check-${i}`);
+        const qtyInput = overlay.querySelector(`#parcial-qty-${i}`);
+        if (check && check.checked) {
+          const qty = Math.min(parseInt(qtyInput?.value) || 0, c.cantidad);
+          t += c.precio * (qty > 0 ? qty : 0);
+        }
+      });
+      const preview = overlay.querySelector("#parcialTotalPreview");
+      if (preview) preview.textContent = `Total seleccionado: S/ ${t.toFixed(2)}`;
+    };
+    overlay.addEventListener("change", updateTotal);
+    overlay.addEventListener("input", updateTotal);
+    updateTotal();
+
+    overlay.querySelector("#parcialCancelBtn").addEventListener("click", () => {
+      overlay.remove();
+      resolve(null);
+    });
+
+    overlay.querySelector("#parcialOkBtn").addEventListener("click", () => {
+      const selected = [];
+      consumos.forEach((c, i) => {
+        const check = overlay.querySelector(`#parcial-check-${i}`);
+        const qtyInput = overlay.querySelector(`#parcial-qty-${i}`);
+        if (check && check.checked) {
+          const qty = Math.min(parseInt(qtyInput?.value) || c.cantidad, c.cantidad);
+          if (qty > 0) {
+            selected.push({ id: c.id, cantidad: qty, precio: c.precio });
+          }
+        }
+      });
+      overlay.remove();
+      resolve(selected);
+    });
+  });
+
+  if (!itemsACobrar || itemsACobrar.length === 0) {
+    if (itemsACobrar !== null) toast.error("⚠️ No seleccionaste ningún producto para cobrar");
+    return;
+  }
+
+  const totalCobrar = itemsACobrar.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+  if (totalCobrar <= 0) {
+    toast.error("⚠️ El total a cobrar debe ser mayor a S/ 0.00");
+    return;
+  }
+
+  // Show payment modal
+  const paymentInfo = await paymentModal.show(totalCobrar, `Cobro Parcial - Mesa ${tipo === "billar" ? "Billar" : "Consumo"} ${mesaId}`);
+  if (!paymentInfo || !paymentInfo.metodoPago) return;
+
+  const ok = await ventasService.procesarCobroParcial(itemsACobrar, totalCobrar, mesa, paymentInfo, tipo);
+  if (!ok) return;
+
+  // Save mesa state to Firestore
+  if (tipo === "billar") {
+    mesasService.saveMesas().catch(console.error);
+    renderMesas();
+  } else {
+    mesasService.saveMesasConsumo().catch(console.error);
+    renderMesasConsumo();
+  }
+
+  renderModalConsumo();
+  document.dispatchEvent(new CustomEvent("ventas:changed"));
+  document.dispatchEvent(new CustomEvent("caja:changed"));
+  document.dispatchEvent(new CustomEvent("dashboard:changed"));
+}
+
+async function handleCerrarMesaDesdeModal() {
+  const { mesaId, tipo } = _modalConsumoState;
+  // Close the consumo modal first
+  document.getElementById("modalConsumo")?.classList.remove("show");
+  // Trigger the normal toggle (which shows payment modal and closes table)
+  if (tipo === "billar") {
+    await toggleMesa(mesaId);
+  } else {
+    await toggleMesaConsumo(mesaId);
+  }
+}
+
+// ======================================================
 // =================== EVENT DELEGATION ================
 // ======================================================
 
 export function initMesasEvents() {
+  // Wire billing panel buttons
+  const btnCobroParcial = document.getElementById("btnCobroParcial");
+  if (btnCobroParcial) {
+    btnCobroParcial.addEventListener("click", handleCobroParcial);
+  }
+  const btnCerrarMesa = document.getElementById("btnCerrarMesa");
+  if (btnCerrarMesa) {
+    btnCerrarMesa.addEventListener("click", handleCerrarMesaDesdeModal);
+  }
+
+  // Product search filter in consumo modal
+  const buscarInput = document.getElementById("buscarConsumoProducto");
+  if (buscarInput) {
+    buscarInput.addEventListener("input", () => {
+      renderModalConsumo();
+    });
+  }
+
   document.addEventListener("click", async (e) => {
     const action = e.target.closest("[data-action]")?.dataset.action;
     if (!action) return;

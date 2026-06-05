@@ -40,6 +40,22 @@ class PaymentModalSystem {
       
       // Wire events dynamically
       this.initEvents();
+
+      // Resolve promise if modal is closed via ESC/backdrop (modalService.close doesn't resolve it)
+      const modalEl = document.getElementById(this.modalId);
+      if (modalEl && !this._closeObserver) {
+        this._closeObserver = new MutationObserver(() => {
+          if (!modalEl.classList.contains('show')) {
+            if (this.resolvePromise) {
+              this.resolvePromise(null);
+              this.resolvePromise = null;
+            }
+            this._closeObserver.disconnect();
+            this._closeObserver = null;
+          }
+        });
+        this._closeObserver.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
+      }
     });
   }
 

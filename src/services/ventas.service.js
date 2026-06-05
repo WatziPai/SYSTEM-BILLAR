@@ -103,7 +103,7 @@ export const ventasService = {
   },
 
   // Process partial payment for items left on a table
-  procesarCobroParcial: async (itemsACobrar, totalCobrar, mesa, paymentInfo) => {
+  procesarCobroParcial: async (itemsACobrar, totalCobrar, mesa, paymentInfo, tipo = null) => {
     // Generate description of selected items
     const descripcionItems = itemsACobrar
       .map((item) => {
@@ -121,7 +121,9 @@ export const ventasService = {
       gananciaParcial += (item.precio - costo) * item.cantidad;
     });
 
-    const tipoMesaLabel = state.tabActual === "mesas" ? "Mesa Billar" : "Mesa Consumo";
+    // Use explicit tipo param if provided, otherwise fall back to state.tabActual
+    const esBillar = tipo ? tipo === "billar" : state.tabActual === "mesas";
+    const tipoMesaLabel = esBillar ? "Mesa Billar" : "Mesa Consumo";
 
     const venta = {
       id: Date.now(),
@@ -136,7 +138,7 @@ export const ventasService = {
       usuario: state.usuarioActual.nombre,
       detalle: {
         mesaId: mesa.id,
-        tipoMesa: state.tabActual === "mesas" ? "billar" : "consumo",
+        tipoMesa: esBillar ? "billar" : "consumo",
         consumos: itemsACobrar.map((item) => {
           const prod = mesa.consumos.find((c) => c.id === item.id);
           return {
@@ -150,7 +152,13 @@ export const ventasService = {
     };
 
     state.ventas.push(venta);
-    await ventasService.saveVentas();
+    try {
+      await ventasService.saveVentas();
+    } catch (err) {
+      state.ventas.pop();
+      toast.error("⚠️ Error al guardar la venta");
+      return false;
+    }
 
     // 2. Subtract from active table quantities
     itemsACobrar.forEach((item) => {
@@ -163,7 +171,7 @@ export const ventasService = {
     // Strip out 0-quantity consumptions
     mesa.consumos = mesa.consumos.filter((c) => c.cantidad > 0);
 
-    if (state.tabActual === "mesasConsumo" || (mesa.total !== undefined)) {
+    if (!esBillar || mesa.total !== undefined) {
       mesa.total = mesa.consumos.reduce((sum, c) => sum + c.precio * c.cantidad, 0);
     }
 
