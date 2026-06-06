@@ -14,12 +14,35 @@ export function renderTablaMovimientos() {
 
   const balances = cajaService.calcularBalances();
 
+  // Calculate monthly expenses (filter by current month)
+  const ahora = new Date();
+  const mesActual = ahora.getMonth();
+  const anioActual = ahora.getFullYear();
+  const egresosMes = state.movimientos
+    .filter((m) => {
+      if (m.oculto) return false;
+      if (!["egreso", "retiro", "reposicion"].includes(m.tipo)) return false;
+      const d = new Date(m.fecha || m.id);
+      if (isNaN(d.getTime())) {
+        const parts = (m.fecha || "").split("/");
+        if (parts.length >= 2) {
+          const mNum = parseInt(parts[1]) - 1;
+          const yNum = parseInt(parts[2]?.split(",")[0] || parts[2]);
+          return mNum === mesActual && yNum === anioActual;
+        }
+        return false;
+      }
+      return d.getMonth() === mesActual && d.getFullYear() === anioActual;
+    })
+    .reduce((acc, m) => acc + (m.monto || 0), 0);
+
   // Update balance cards
   const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   setEl("saldoCajaLocal", `S/ ${(balances.balLocal || 0).toFixed(2)}`);
   setEl("saldoCajaChica", `S/ ${(balances.balChica || 0).toFixed(2)}`);
   setEl("saldoYape", `S/ ${(balances.balYape || 0).toFixed(2)}`);
-  setEl("totalEgresos", `S/ ${(balances.totalEgresosTotal || 0).toFixed(2)}`);
+  setEl("totalEgresos", `S/ ${egresosMes.toFixed(2)}`);
+  setEl("cajaBalance", `S/ ${((balances.balLocal || 0) + (balances.balChica || 0) + (balances.balYape || 0)).toFixed(2)}`);
 
   const movimientos = state.movimientos;
 
