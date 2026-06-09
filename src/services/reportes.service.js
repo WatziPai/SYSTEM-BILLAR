@@ -134,17 +134,31 @@ export const reportesService = {
       return false;
     }
 
-    const totalCierre = ventasActuales.reduce((sum, v) => sum + (v.monto || 0), 0);
-    const totalEfectivoPeriodo = ventasActuales.reduce((sum, v) => {
-      if (v.metodoPago === "Mixto") return sum + (v.montoEfectivo || 0);
-      if ((v.metodoPago || "Efectivo") === "Efectivo") return sum + (v.monto || 0);
-      return sum;
-    }, 0);
-    const totalYapePeriodo = ventasActuales.reduce((sum, v) => {
-      if (v.metodoPago === "Mixto") return sum + (v.montoYape || 0);
-      if (v.metodoPago === "Yape") return sum + (v.monto || 0);
-      return sum;
-    }, 0);
+    // Single pass over ventasActuales
+    let totalCierre = 0, totalEfectivoPeriodo = 0, totalYapePeriodo = 0;
+    let gananciaVentasPeriodo = 0, totalHorasBillar = 0, ventasMesas = 0, ventasProductos = 0;
+    const ventasSnapshot = [];
+    for (const v of ventasActuales) {
+      const monto = v.monto || 0;
+      totalCierre += monto;
+      if (v.metodoPago === "Mixto") {
+        totalEfectivoPeriodo += v.montoEfectivo || 0;
+        totalYapePeriodo += v.montoYape || 0;
+      } else if ((v.metodoPago || "Efectivo") === "Efectivo") {
+        totalEfectivoPeriodo += monto;
+      } else if (v.metodoPago === "Yape") {
+        totalYapePeriodo += monto;
+      }
+      gananciaVentasPeriodo += v.ganancia || 0;
+      if (v.tipo === "Mesa Billar") {
+        ventasMesas += monto;
+        if (v.detalle) totalHorasBillar += v.detalle.tiempoMinutos || 0;
+      } else {
+        ventasProductos += monto;
+      }
+      ventasSnapshot.push({ ...v });
+    }
+    totalHorasBillar /= 60;
 
     const confirmCierre = await confirmDialog.show(
       "📊 Confirmar Cierre de Turno",
@@ -158,37 +172,32 @@ export const reportesService = {
       ? state.consumosDueno.filter((c) => c.id > state.ultimoCierre)
       : state.consumosDueno;
 
-    const totalConsumosDuenoVenta = consumosDuenoActuales.reduce(
-      (sum, c) => sum + (c.totalVenta || c.total || 0),
-      0
-    );
-    const totalConsumosDuenoCosto = consumosDuenoActuales.reduce(
-      (sum, c) => sum + (c.totalCosto || 0),
-      0
-    );
+    // Single pass over consumosDuenoActuales
+    let totalConsumosDuenoVenta = 0, totalConsumosDuenoCosto = 0;
+    const consumosSnapshot = [];
+    for (const c of consumosDuenoActuales) {
+      totalConsumosDuenoVenta += c.totalVenta || c.total || 0;
+      totalConsumosDuenoCosto += c.totalCosto || 0;
+      consumosSnapshot.push({ ...c });
+    }
 
     const movimientosActuales = state.ultimoCierre
       ? state.movimientos.filter((m) => m.id > state.ultimoCierre)
       : state.movimientos;
 
-    const totalIngresosExtra = movimientosActuales
-      .filter((m) => m.tipo === "ingreso")
-      .reduce((sum, m) => sum + m.monto, 0);
-    const totalEgresos = movimientosActuales
-      .filter((m) => ["egreso", "retiro", "reposicion"].includes(m.tipo))
-      .reduce((sum, m) => sum + m.monto, 0);
-
-    const gananciaVentasPeriodo = ventasActuales.reduce((sum, v) => sum + (v.ganancia || 0), 0);
+    // Single pass over movimientosActuales
+    let totalIngresosExtra = 0, totalEgresos = 0;
+    for (const m of movimientosActuales) {
+      const monto = m.monto || 0;
+      if (m.tipo === "ingreso") totalIngresosExtra += monto;
+      else if (["egreso", "retiro", "reposicion"].includes(m.tipo)) totalEgresos += monto;
+    }
 
     // NET PROFIT = Gross Profit (Sales) + Extra incomes - Expenses - Cost of Owner Consumos
     const utilidadNetaPeriodo = gananciaVentasPeriodo + totalIngresosExtra - totalEgresos - totalConsumosDuenoCosto;
 
     // Split Caja calculations for period
     const balancesActuales = cajaService.calcularBalances();
-
-    const totalHorasBillar = ventasActuales
-      .filter((v) => v.tipo === "Mesa Billar" && v.detalle)
-      .reduce((sum, v) => sum + (v.detalle.tiempoMinutos || 0), 0) / 60;
 
     const nuevoCierre = {
       id: Date.now(),
@@ -205,10 +214,10 @@ export const reportesService = {
       totalEgresos: totalEgresos,
       totalIngresosExtra: totalIngresosExtra,
       utilidadNeta: utilidadNetaPeriodo,
-      ventas: ventasActuales.map((v) => ({ ...v })),
-      ventasMesas: ventasActuales.filter((v) => v.tipo === "Mesa Billar").reduce((sum, v) => sum + v.monto, 0),
-      ventasProductos: ventasActuales.filter((v) => v.tipo !== "Mesa Billar").reduce((sum, v) => sum + v.monto, 0),
-      consumosDueno: consumosDuenoActuales.map((c) => ({ ...c })),
+      ventas: ventasSnapshot,
+      ventasMesas: ventasMesas,
+      ventasProductos: ventasProductos,
+      consumosDueno: consumosSnapshot,
       totalConsumosDuenoVenta: totalConsumosDuenoVenta,
       totalConsumosDuenoCosto: totalConsumosDuenoCosto,
       horasBillar: totalHorasBillar,
