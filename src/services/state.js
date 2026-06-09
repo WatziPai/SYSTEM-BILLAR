@@ -42,29 +42,23 @@ export const state = {
 // ========= FASE 1: Datos críticos al iniciar sesión ===
 // ======================================================
 // Solo carga lo indispensable para mostrar las mesas rápidamente:
-// Usuarios, Configuración, Productos y las dos colecciones de Mesas.
-// También carga ventas y cierres para calcular el "Total del Día" en el header
+// Usuarios, Configuración y las dos colecciones de Mesas.
+// Productos, Ventas y Cierres se cargan después en segundo plano.
 export async function cargarDatosCriticos() {
-  debugLog("firebase", "⚡ [Lazy] Cargando datos críticos (Mesas + Config + Ventas)...");
+  debugLog("firebase", "⚡ [Lazy] Cargando datos críticos (Mesas + Config)...");
   const tiempoInicio = Date.now();
 
   try {
     const [
       usuariosData,
       configData,
-      productosData,
       mesasData,
       mesasConsumoData,
-      ventasData,
-      cierresData,
     ] = await Promise.all([
       dbService.get(COLLECTIONS.USUARIOS, DOC_IDS.TODOS),
       dbService.get(COLLECTIONS.CONFIGURACION, DOC_IDS.GENERAL),
-      dbService.get(COLLECTIONS.PRODUCTOS, DOC_IDS.TODOS),
       dbService.get(COLLECTIONS.MESAS, DOC_IDS.BILLAR),
       dbService.get(COLLECTIONS.MESAS, DOC_IDS.CONSUMO),
-      dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS),
-      dbService.get(COLLECTIONS.CIERRES, DOC_IDS.HISTORIAL),
     ]);
 
     // Usuarios y configuración
@@ -80,9 +74,6 @@ export async function cargarDatosCriticos() {
       if (inputTarifa) inputTarifa.value = state.config.tarifaHora.toFixed(2);
       if (inputExtra) inputExtra.value = state.config.tarifaExtra5Min.toFixed(2);
     }
-
-    // Productos (necesarios para el modal de consumos en mesas)
-    state.productos = productosData?.lista || [];
 
     // Mesas de billar
     if (mesasData && mesasData.lista) {
@@ -111,21 +102,52 @@ export async function cargarDatosCriticos() {
       await guardarDatosGenerico(COLLECTIONS.MESAS, DOC_IDS.CONSUMO, { lista: state.mesasConsumo }, true);
     }
 
-    // Ventas (necesarias para mostrar "Total del Día" en el header)
-    state.ventas = ventasData?.lista || [];
-    state.modulosCargados.ventas = true;
-
-    // Cierres (necesarios para calcular el último cierre y filtrar ventas del día)
-    state.cierres = cierresData?.lista || [];
-    if (state.cierres.length > 0) {
-      state.ultimoCierre = state.cierres[state.cierres.length - 1].timestamp;
-    }
-
     const tiempoTotal = Date.now() - tiempoInicio;
     debugLog("firebase", `✅ [Lazy] Datos críticos cargados en ${tiempoTotal}ms`);
   } catch (error) {
     debugLog("error", "❌ Error cargando datos críticos:", error);
     throw error;
+  }
+}
+
+// ======================================================
+// ========= FASE 1b: Datos diferidos post-login ========
+// ======================================================
+// Se ejecuta después de mostrar la pantalla principal.
+// Productos, Ventas y Cierres se cargan en segundo plano.
+export async function cargarDatosDiferidos() {
+  debugLog("firebase", "⏳ [Lazy] Cargando datos diferidos (Productos + Ventas + Cierres)...");
+  const tiempoInicio = Date.now();
+
+  try {
+    const [
+      productosData,
+      ventasData,
+      cierresData,
+    ] = await Promise.all([
+      dbService.get(COLLECTIONS.PRODUCTOS, DOC_IDS.TODOS),
+      dbService.get(COLLECTIONS.VENTAS, DOC_IDS.TODAS),
+      dbService.get(COLLECTIONS.CIERRES, DOC_IDS.HISTORIAL),
+    ]);
+
+    state.productos = productosData?.lista || [];
+
+    state.ventas = ventasData?.lista || [];
+    state.modulosCargados.ventas = true;
+
+    state.cierres = cierresData?.lista || [];
+    if (state.cierres.length > 0) {
+      state.ultimoCierre = state.cierres[state.cierres.length - 1].timestamp;
+    }
+
+    // Actualizar el header con el total del día
+    const { calcularTotal } = await import("@/modules/ventas/ventas.module");
+    calcularTotal();
+
+    const tiempoTotal = Date.now() - tiempoInicio;
+    debugLog("firebase", `✅ [Lazy] Datos diferidos cargados en ${tiempoTotal}ms`);
+  } catch (error) {
+    debugLog("error", "❌ Error cargando datos diferidos:", error);
   }
 }
 

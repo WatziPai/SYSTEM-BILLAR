@@ -1,5 +1,5 @@
 import { authService } from "@/services/auth.service";
-import { state, cargarDatosCriticos } from "@/services/state";
+import { state, cargarDatosCriticos, cargarDatosDiferidos } from "@/services/state";
 import { COLLECTIONS, DOC_IDS, SECURITY } from "@/utils/constants";
 import { debugLog } from "@/utils/debug";
 import { toast } from "@/components/toast";
@@ -262,7 +262,7 @@ export async function initAuth(onLoginSuccess) {
       }
 
       try {
-        await cargarDatosCriticos(); // ⚡ Carga Diferida: solo datos críticos (Mesas, Config, Productos)
+        await cargarDatosCriticos(); // ⚡ Solo datos críticos (Mesas + Config)
 
         const username = user.email.split("@")[0];
         const usuario = state.usuarios.find((u) => u.username === username);
@@ -273,6 +273,8 @@ export async function initAuth(onLoginSuccess) {
           localStorage.setItem("ultimaActividad", Date.now().toString());
           mostrarPantallaPrincipal();
           if (typeof onLoginSuccess === "function") onLoginSuccess();
+          // Cargar productos, ventas y cierres en segundo plano (no bloquea la UI)
+          cargarDatosDiferidos();
         } else {
           debugLog("error", "❌ Usuario autenticado pero no encontrado en Firestore");
           await authService.signOut();
