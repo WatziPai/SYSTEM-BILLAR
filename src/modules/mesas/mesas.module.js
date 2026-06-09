@@ -294,14 +294,17 @@ function renderModalConsumo() {
   // Product list
   if (!productosContainer) return;
 
-  const productosOrdenados = ordenarProductosPorCategoria(state.productos);
+  const terminoBusqueda = (document.getElementById("buscarConsumoProducto")?.value || "").toLowerCase().trim();
+  const productosFiltrados = terminoBusqueda
+    ? productosOrdenados.filter((p) => p.nombre.toLowerCase().includes(terminoBusqueda))
+    : productosOrdenados;
 
-  if (productosOrdenados.length === 0) {
+  if (productosFiltrados.length === 0) {
     productosContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No hay productos disponibles</p>';
     return;
   }
 
-  productosContainer.innerHTML = productosOrdenados.map((p) => {
+  productosContainer.innerHTML = productosFiltrados.map((p) => {
     const disponible = p.stock > 0;
     return `
       <div class="producto-venta-card ${!disponible ? "no-stock" : ""}">

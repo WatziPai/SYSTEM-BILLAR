@@ -422,7 +422,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
       }
 
-      // Enter key for Modal primary actions
+      // Enter key for Modal primary actions (skip if typing in an input)
+      const activeTag = document.activeElement?.tagName || "";
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(activeTag)) return;
       const activeModal = document.querySelector(".modal.show");
       if (activeModal) {
         // Find the primary button (usually green/save button)
