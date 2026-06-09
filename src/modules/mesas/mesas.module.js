@@ -294,6 +294,7 @@ function renderModalConsumo() {
   // Product list
   if (!productosContainer) return;
 
+  const productosOrdenados = ordenarProductosPorCategoria(state.productos);
   const terminoBusqueda = (document.getElementById("buscarConsumoProducto")?.value || "").toLowerCase().trim();
   const productosFiltrados = terminoBusqueda
     ? productosOrdenados.filter((p) => p.nombre.toLowerCase().includes(terminoBusqueda))
